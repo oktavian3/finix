@@ -29,7 +29,7 @@ function suggestEmoji(name: string): string {
 }
 
 export default function GoalsPage() {
-  const { data, updateData } = useFinixData();
+  const { data, updateData, currentSummary } = useFinixData();
   const { isConnected, connect, isConnecting, address } = useWallet();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState('');
@@ -100,11 +100,10 @@ export default function GoalsPage() {
         {activeGoals.map(g => {
           const progress = g.targetAmount > 0 ? Math.min((g.savedAmount / g.targetAmount) * 100, 100) : 0;
           const remaining = g.targetAmount - g.savedAmount;
-          const eta = (cs: any) => {
-            const rate = cs.savingRate || 1;
-            const monthlySave = cs.totalIncome * (rate / 100);
-            return monthlySave > 0 ? Math.ceil(remaining / monthlySave) : '∞';
-          };
+          const monthlyIncome = currentSummary.totalIncome * (currentSummary.savingRate / 100);
+          const eta = monthlyIncome > 0
+            ? Math.ceil(remaining / monthlyIncome)
+            : '∞';
           return (
             <div key={g.id} className="bg-white border border-[#E2E8F0] rounded-[12px] p-[18px] group">
               <div className="flex items-start justify-between mb-3">
