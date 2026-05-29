@@ -1,11 +1,10 @@
 "use client";
 
-import React from 'react';
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useWallet } from "@/hooks/useWallet";
 import { useFinixData } from "@/hooks/useFinixData";
-import { ArrowRight, Shield, Wallet, Waves, Database, Loader2, TrendingUp, Target, Lock, type LucideIcon } from "lucide-react";
+import { ArrowRight, Shield, Wallet, Waves, Database, Loader2 } from "lucide-react";
 
 export default function Home() {
   const { isConnected, connect, isConnecting, address } = useWallet();
@@ -20,178 +19,127 @@ export default function Home() {
   }, [isConnected, address, connectWallet, router]);
 
   return (
-    <main className="min-h-screen bg-[#0A0E1A] cyber-grid-bg relative overflow-hidden">
-      {/* Scanline overlay */}
-      <div className="scanline-overlay" />
-      
-      {/* Corner coordinates */}
-      <div className="absolute top-4 left-4 text-[9px] font-mono text-[#334155] z-10">
-        X:0 Y:0 // FINIX_SYS
-      </div>
-      <div className="absolute top-4 right-4 text-[9px] font-mono text-[#334155] z-10">
-        v2.0.1 // {new Date().toISOString().slice(0,10)}
-      </div>
-      <div className="absolute bottom-4 left-4 text-[9px] font-mono text-[#334155] z-10">
-        NETWORK: SUI_MAINNET
-      </div>
-      <div className="absolute bottom-4 right-4 text-[9px] font-mono text-[#334155] z-10">
-        STATUS: OPERATIONAL
-      </div>
-
-      <section className="mx-auto flex min-h-screen max-w-[1200px] items-center px-8 relative z-10">
-        <div className="grid w-full grid-cols-[1fr_1fr] gap-0 border border-[#1E293B]">
-          {/* Left - Hero */}
-          <div className="flex min-h-[620px] flex-col p-10 border-r border-[#1E293B]">
-            {/* Logo */}
-            <div className="flex items-center gap-2 mb-2">
-              <span className="fx-logo-mark flex items-center justify-center w-8 h-8 rounded-none bg-[#3B5BDB] text-white text-sm font-bold border border-[#4F6EF7]">
+    <main className="min-h-screen bg-[#EEF2FF] p-8">
+      <section className="mx-auto flex min-h-[calc(100vh-64px)] max-w-[1120px] items-center">
+        <div className="grid w-full grid-cols-[0.95fr_1.05fr] overflow-hidden rounded-[26px] border border-[#E2E8F0] bg-white shadow-[0_24px_80px_rgba(15,23,42,0.12)]">
+          {/* Left */}
+          <div className="flex min-h-[620px] flex-col p-10">
+            <div className="flex items-center gap-2">
+              <span className="fx-logo-mark flex items-center justify-center w-8 h-8 rounded-lg bg-[#3B5BDB] text-white text-sm font-bold">
                 F
               </span>
-              <span className="text-[18px] font-bold text-white font-mono tracking-wider">FINIX</span>
+              <span className="text-[16px] font-semibold text-[#111827]">Finix</span>
             </div>
-            <div className="text-[9px] font-mono text-[#6B7280] tracking-widest uppercase">Personal Finance Terminal</div>
 
-            {/* Hero Content */}
-            <div className="mt-16 max-w-[480px]">
-              <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#3B5BDB] mb-4">
-                {"// PERSONAL.FINANCE // SUI_NETWORK"}
+            <div className="mt-20 max-w-[440px]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#3B5BDB]">
+                Personal finance on Sui
               </p>
-              <h1 className="text-[48px] font-bold leading-[1.02] text-white tracking-tight uppercase">
+              <h1 className="mt-4 text-[44px] font-semibold leading-[1.02] text-[#111827]">
                 Track your money, on-chain.
               </h1>
-              <p className="mt-6 text-[13px] leading-6 text-[#9CA3AF] font-mono">
-                Connect your Sui wallet to manage income, expenses, goals, and AI summaries with your financial data stored as Walrus blobs.
+              <p className="mt-5 text-[14px] leading-6 text-[#6B7280]">
+                Connect your Sui wallet to manage income, expenses, goals, and
+                AI summaries with your financial data stored as Walrus blobs.
               </p>
 
               <div className="mt-8 flex items-center gap-3">
                 <button
                   onClick={connect}
                   disabled={isConnecting}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-[#3B5BDB] text-white rounded-none text-[12px] font-bold font-mono uppercase tracking-wider hover:bg-[#4F6EF7] hover:shadow-[0_0_30px_rgba(59,91,219,0.5)] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] transition-all duration-150 disabled:opacity-50 border border-[#4F6EF7] animate-glitch-text"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-[#3B5BDB] text-white rounded-[10px] text-[13px] font-semibold hover:bg-[#3451D0] active:bg-[#2E48BC] transition-all disabled:opacity-50"
                 >
                   {isConnecting ? (
-                    <Loader2 size={15} className="animate-spin" />
+                    <Loader2 size={16} className="animate-spin" />
                   ) : (
-                    <Wallet size={15} />
+                    <Wallet size={16} />
                   )}
-                  {isConnecting ? 'CONNECTING...' : 'CONNECT WALLET'}
+                  {isConnecting ? 'Connecting...' : 'Connect Wallet'}
                 </button>
-                <span className="inline-flex h-[42px] w-[42px] items-center justify-center border border-[#1E293B] text-[#3B5BDB] bg-[#111827]">
-                  <ArrowRight size={16} />
+                <span className="inline-flex h-[42px] w-[42px] items-center justify-center rounded-full bg-[#F8FAFC] text-[#3B5BDB]">
+                  <ArrowRight size={18} />
                 </span>
               </div>
             </div>
 
-            {/* Bottom status */}
             <div className="mt-auto">
-              <p className="mb-3 text-[9px] font-mono uppercase tracking-[0.2em] text-[#334155]">
-                {"// POWERED_BY"}
+              <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">
+                Powered by
               </p>
-              <div className="flex gap-2">
-                <div className="flex h-[38px] items-center gap-2 border border-[#1E293B] bg-[#111827] px-3">
-                  <span className="flex h-[18px] w-[18px] items-center justify-center bg-[#3B5BDB] text-white">
-                    <Waves size={10} />
+              <div className="flex gap-3">
+                <div className="flex h-[46px] items-center gap-2 rounded-[12px] border border-[#E2E8F0] bg-[#F8FAFC] px-4">
+                  <span className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-[#3B5BDB] text-white">
+                    <Waves size={14} />
                   </span>
-                  <span className="text-[10px] font-mono font-semibold text-[#9CA3AF]">SUI_NETWORK</span>
+                  <span className="text-[12px] font-semibold text-[#111827]">Sui Network</span>
                 </div>
-                <div className="flex h-[38px] items-center gap-2 border border-[#1E293B] bg-[#111827] px-3">
-                  <span className="flex h-[18px] w-[18px] items-center justify-center bg-[#334155] text-white">
-                    <Database size={10} />
+                <div className="flex h-[46px] items-center gap-2 rounded-[12px] border border-[#E2E8F0] bg-[#F8FAFC] px-4">
+                  <span className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-[#111827] text-white">
+                    <Database size={14} />
                   </span>
-                  <span className="text-[10px] font-mono font-semibold text-[#9CA3AF]">WALRUS</span>
+                  <span className="text-[12px] font-semibold text-[#111827]">Walrus</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right - Dashboard Preview */}
-          <div className="relative overflow-hidden bg-[#111827] p-8">
-            {/* Moving scanline */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <div className="absolute w-full h-[2px] bg-[#3B5BDB]/20 animate-scanline-move" />
-            </div>
-
-            <div className="relative flex h-full flex-col gap-4">
-              {/* Status badge */}
-              <div className="ml-auto flex items-center gap-2 bg-[#0A0E1A] border border-[#1E293B] px-3 py-2">
-                <Shield size={13} className="text-[#15803D]" />
-                <span className="text-[10px] font-mono text-[#9CA3AF]">MAINNET_READY</span>
+          {/* Right */}
+          <div className="relative overflow-hidden bg-[#F8FAFC] p-8">
+            <div className="relative flex h-full flex-col gap-5">
+              <div className="ml-auto flex items-center gap-2 rounded-full bg-white px-3 py-2 shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
+                <Shield size={15} className="text-[#15803D]" />
+                <span className="text-[11px] font-medium text-[#374151]">Mainnet ready</span>
               </div>
 
-              {/* Balance Card */}
-              <div className="mt-6 border border-[#1E293B] bg-[#0A0E1A] p-5">
+              <div className="mt-10 rounded-[18px] border border-[#E2E8F0] bg-white p-6 shadow-[0_16px_48px_rgba(15,23,42,0.08)]">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[10px] font-mono text-[#6B7280] uppercase tracking-wider">Monthly Balance</p>
-                    <p className="mt-2 text-[32px] font-bold text-white font-mono">$4,792</p>
+                    <p className="text-[11px] text-[#6B7280]">Monthly balance</p>
+                    <p className="mt-2 text-[32px] font-semibold text-[#111827]">$4,792</p>
                   </div>
-                  <div className="flex h-[40px] w-[40px] items-center justify-center border border-[#1E293B] bg-[#111827] text-[#3B5BDB]">
-                    <Wallet size={16} />
+                  <div className="flex h-[42px] w-[42px] items-center justify-center rounded-full bg-[#EEF2FF] text-[#3B5BDB]">
+                    <Wallet size={18} />
                   </div>
                 </div>
-                {/* Bar chart preview */}
-                <div className="mt-6 grid grid-cols-6 items-end gap-2">
-                  {[64, 46, 82, 38, 96, 72].map((height, i) => (
+                <div className="mt-8 grid grid-cols-6 items-end gap-3">
+                  {[64, 46, 82, 38, 96, 72].map((height) => (
                     <div
                       key={height}
-                      className="bg-[#3B5BDB]"
-                      style={{ height, opacity: 0.3 + i * 0.12 }}
+                      className="rounded-full bg-[#4F6EF7]"
+                      style={{ height, opacity: 0.42 + [64, 46, 82, 38, 96, 72].indexOf(height) * 0.09 }}
                     />
                   ))}
                 </div>
               </div>
 
-              {/* Stats row */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="border border-[#1E293B] bg-[#0A0E1A] p-4">
-                  <p className="text-[10px] font-mono text-[#6B7280] uppercase tracking-wider">Saving Rate</p>
-                  <p className="mt-1 text-[24px] font-bold text-[#3B5BDB] font-mono">76%</p>
-                  <div className="mt-3 h-1 bg-[#1E293B]">
-                    <div className="h-1 bg-[#3B5BDB]" style={{ width: '76%' }} />
+              <div className="grid grid-cols-2 gap-5">
+                <div className="rounded-[18px] border border-[#E2E8F0] bg-white p-5">
+                  <p className="text-[11px] text-[#6B7280]">Saving rate</p>
+                  <p className="mt-2 text-[28px] font-semibold text-[#3B5BDB]">76%</p>
+                  <div className="mt-4 h-2 rounded-full bg-[#EEF2FF]">
+                    <div className="h-2 w-[76%] rounded-full bg-[#3B5BDB]" />
                   </div>
                 </div>
-                <div className="border border-[#1E293B] bg-[#0A0E1A] p-4">
-                  <p className="text-[10px] font-mono text-[#6B7280] uppercase tracking-wider">Walrus Blob</p>
-                  <p className="mt-1 text-[13px] font-semibold text-white font-mono">READY_TO_WRITE</p>
-                  <p className="mt-3 text-[10px] font-mono text-[#6B7280] leading-4">
+                <div className="rounded-[18px] bg-[#111827] p-5 text-white">
+                  <p className="text-[11px] text-white/55">Walrus blob</p>
+                  <p className="mt-2 text-[15px] font-semibold">Ready to write</p>
+                  <p className="mt-4 text-[11px] leading-5 text-white/60">
                     Each confirmed update creates a fresh decentralized data blob.
                   </p>
                 </div>
               </div>
 
-              {/* Info card */}
-              <div className="mt-auto border border-[#1E293B] bg-[#0A0E1A] p-4">
-                <p className="text-[12px] font-semibold text-white font-mono">Your wallet is your account</p>
-                <p className="mt-2 text-[11px] font-mono leading-5 text-[#6B7280]">
-                  No email login, no centralized database. Finix uses your Sui address as identity and Walrus as the storage layer.
+              <div className="mt-auto rounded-[18px] border border-[#E2E8F0] bg-white p-5">
+                <p className="text-[13px] font-semibold text-[#111827]">Your wallet is your account</p>
+                <p className="mt-2 text-[12px] leading-5 text-[#6B7280]">
+                  No email login, no centralized finance database. Finix uses
+                  your Sui address as identity and Walrus as the storage layer.
                 </p>
               </div>
             </div>
           </div>
         </div>
       </section>
-
-      {/* Feature cards at bottom */}
-      <div className="max-w-[1200px] mx-auto px-8 pb-12 relative z-10">
-        <div className="grid grid-cols-3 gap-0 border border-[#1E293B]">
-          <FeatureCard icon={Lock} title="WALRUS_STORAGE" desc="Decentralized data blobs on Sui mainnet" num="/01" />
-          <FeatureCard icon={TrendingUp} title="AI_INSIGHTS" desc="Claude-powered financial analysis" num="/02" />
-          <FeatureCard icon={Target} title="GOAL_TRACKING" desc="Set targets, track progress on-chain" num="/03" />
-        </div>
-      </div>
     </main>
-  );
-}
-
-function FeatureCard({ icon: Icon, title, desc, num }: { icon: LucideIcon; title: string; desc: string; num: string }) {
-  return (
-    <div className="p-6 border-r border-[#1E293B] last:border-r-0 bg-[#111827]/50 hover:bg-[#111827] transition-colors duration-150">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-[9px] font-mono text-[#3B5BDB]">{num}</span>
-        <Icon size={14} className="text-[#3B5BDB]" />
-      </div>
-      <h3 className="text-[12px] font-bold text-white font-mono tracking-wide uppercase">{title}</h3>
-      <p className="text-[11px] font-mono text-[#6B7280] mt-1 leading-4">{desc}</p>
-    </div>
   );
 }

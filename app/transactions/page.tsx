@@ -41,6 +41,7 @@ export default function TransactionsPage() {
       );
     }
 
+    // Group by date (most recent first)
     const groups: Record<string, Transaction[]> = {};
     txs.forEach(t => {
       if (!groups[t.date]) groups[t.date] = [];
@@ -67,11 +68,11 @@ export default function TransactionsPage() {
     return (
       <AppShell title="Transactions">
         <div className="flex flex-col items-center justify-center py-24">
-          <Wallet size={48} className="text-[#1E293B] mb-4" />
-          <h2 className="text-[16px] font-semibold text-white font-mono mb-2">CONNECT YOUR WALLET</h2>
-          <p className="text-[12px] font-mono text-[#6B7280] mb-6">Connect to view and manage transactions</p>
+          <Wallet size={48} className="text-[#C5D0FF] mb-4" />
+          <h2 className="text-[18px] font-semibold text-[#111827] mb-2">Connect your wallet</h2>
+          <p className="text-[13px] text-[#6B7280] mb-6">Connect to view and manage transactions</p>
           <Button size="lg" onClick={connect} loading={isConnecting}>
-            <Wallet size={15} /> CONNECT WALLET
+            <Wallet size={16} /> Connect Wallet
           </Button>
         </div>
       </AppShell>
@@ -81,15 +82,14 @@ export default function TransactionsPage() {
   return (
     <AppShell
       title="Transactions"
-      subtitle="// TRANSACTION_LOG"
       topbarExtra={
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#111827] border border-[#1E293B]">
-            <span className="flex h-[5px] w-[5px] items-center justify-center rounded-full bg-[#15803D] animate-pulse" />
-            <span className="text-[10px] font-mono text-[#9CA3AF]">NODE: {address?.slice(0, 6)}...{address?.slice(-4)}</span>
+          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[10px] bg-[#EEF2FF] border border-[#C5D0FF]">
+            <Wallet size={12} className="text-[#3B5BDB]" />
+            <span className="text-[11px] font-medium text-[#374151]">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
           </div>
           <Button size="sm" onClick={() => setIsModalOpen(true)}>
-            <Plus size={12} /> ADD TX
+            <Plus size={13} /> Add Transaction
           </Button>
         </div>
       }
@@ -97,27 +97,27 @@ export default function TransactionsPage() {
       {/* Filter Bar */}
       <div className="flex items-center gap-3 mb-5">
         <div className="relative flex-1 max-w-[300px]">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]" />
           <input
             type="text"
             placeholder="Search transactions..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-[11px] font-mono border border-[#1E293B] rounded-none bg-[#111827] text-white focus:outline-none focus:border-[#3B5BDB] placeholder-[#334155]"
+            className="w-full pl-9 pr-3 py-2 text-[12px] border border-[#E2E8F0] rounded-[10px] bg-white focus:outline-none focus:border-[#3B5BDB]"
           />
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1.5">
           {(['all', 'income', 'expense'] as const).map(t => (
             <button
               key={t}
               onClick={() => setFilterType(t)}
-              className={`px-3 py-1.5 text-[10px] font-mono font-medium transition-all duration-150 rounded-none ${
+              className={`px-3 py-1.5 text-[11px] font-medium rounded-[8px] transition-all ${
                 filterType === t 
                   ? 'bg-[#3B5BDB] text-white' 
-                  : 'bg-[#111827] border border-[#1E293B] text-[#9CA3AF] hover:text-white hover:border-[#334155]'
+                  : 'bg-white border border-[#E2E8F0] text-[#374151] hover:bg-[#F5F7FF]'
               }`}
             >
-              {t.toUpperCase()}
+              {t.charAt(0).toUpperCase() + t.slice(1)}
             </button>
           ))}
         </div>
@@ -125,7 +125,7 @@ export default function TransactionsPage() {
           type="month"
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(e.target.value)}
-          className="px-3 py-1.5 text-[10px] font-mono border border-[#1E293B] rounded-none bg-[#111827] text-[#9CA3AF] focus:outline-none focus:border-[#3B5BDB]"
+          className="px-3 py-1.5 text-[11px] border border-[#E2E8F0] rounded-[8px] bg-white focus:outline-none focus:border-[#3B5BDB]"
         />
       </div>
 
@@ -134,26 +134,26 @@ export default function TransactionsPage() {
         {filteredTxs.map(group => (
           <div key={group.date}>
             <div className="flex items-center justify-between mb-2 px-1">
-              <span className="text-[10px] font-mono font-semibold text-white">{group.date}</span>
-              <span className={`text-[10px] font-mono font-semibold ${group.dayTotal >= 0 ? 'text-[#15803D]' : 'text-[#B91C1C]'}`}>
+              <span className="text-[11px] font-semibold text-[#111827]">{group.date}</span>
+              <span className={`text-[11px] font-semibold ${group.dayTotal >= 0 ? 'text-[#15803D]' : 'text-[#B91C1C]'}`}>
                 {group.dayTotal >= 0 ? '+' : ''}{formatCurrency(group.dayTotal)}
               </span>
             </div>
-            <div className="bg-[#111827] border border-[#1E293B] overflow-hidden">
+            <div className="bg-white border border-[#E2E8F0] rounded-[12px] overflow-hidden">
               {group.transactions.map(t => (
-                <div key={t.id} className="flex items-center gap-3 px-4 py-3 hover:bg-[#1E293B]/30 transition-colors border-b border-[#1E293B]/50 last:border-b-0 group">
-                  <span className="text-[16px]">{categoryEmojis[t.category || t.source || 'other']}</span>
+                <div key={t.id} className="flex items-center gap-3 px-4 py-3 hover:bg-[#F8FAFC] transition-colors border-b border-[#E2E8F0] last:border-b-0 group">
+                  <span className="text-[18px]">{categoryEmojis[t.category || t.source || 'other']}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-mono font-medium text-white truncate">{t.description || (t.category || t.source || 'Unknown')}</p>
-                    <p className="text-[9px] font-mono text-[#6B7280] uppercase">{t.category || t.source || 'other'}</p>
+                    <p className="text-[12px] font-medium text-[#111827] truncate">{t.description || (t.category || t.source || 'Unknown')}</p>
+                    <p className="text-[10px] text-[#9CA3AF] capitalize">{t.category || t.source || 'other'}</p>
                   </div>
-                  <div className={`flex items-center gap-1 text-[11px] font-mono font-semibold ${t.type === 'income' ? 'text-[#15803D]' : 'text-[#B91C1C]'}`}>
-                    {t.type === 'income' ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
+                  <div className={`flex items-center gap-1 text-[12px] font-semibold ${t.type === 'income' ? 'text-[#15803D]' : 'text-[#B91C1C]'}`}>
+                    {t.type === 'income' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
                     {formatCurrency(t.amount)}
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => handleDelete(t.id)} className="p-1.5 text-[#6B7280] hover:text-[#B91C1C] transition-colors">
-                      <Trash2 size={12} />
+                    <button onClick={() => handleDelete(t.id)} className="p-1.5 rounded-[6px] text-[#9CA3AF] hover:text-[#B91C1C] hover:bg-[#FEF2F2]">
+                      <Trash2 size={13} />
                     </button>
                   </div>
                 </div>
@@ -163,7 +163,7 @@ export default function TransactionsPage() {
         ))}
         {filteredTxs.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-[12px] font-mono text-[#6B7280]">{`// NO_TRANSACTIONS_FOUND`}</p>
+            <p className="text-[13px] text-[#6B7280]">No transactions found</p>
           </div>
         )}
       </div>
