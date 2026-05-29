@@ -16,7 +16,7 @@ export function AppShell({ title, subtitle, children, topbarExtra }: AppShellPro
     <div className="min-h-screen bg-[#EEF2FF]">
       <Sidebar />
       <div className="ml-[210px]">
-        <div className="sticky top-0 z-30 bg-white border-b border-[#E2E8F0] px-[26px] py-3 flex items-center justify-between">
+        <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-[#E2E8F0] px-[26px] py-3 flex items-center justify-between">
           <div>
             <h1 className="text-[18px] font-semibold text-[#111827]">{title}</h1>
             {subtitle && <p className="text-[11px] text-[#6B7280] mt-0.5">{subtitle}</p>}
@@ -25,7 +25,7 @@ export function AppShell({ title, subtitle, children, topbarExtra }: AppShellPro
             {topbarExtra}
           </div>
         </div>
-        <div className="p-[18px_26px]">
+        <div className="p-[18px_26px] animate-fade-in">
           {children}
         </div>
       </div>

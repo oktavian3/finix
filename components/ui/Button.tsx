@@ -17,12 +17,12 @@ export function Button({
   children, onClick, variant = 'primary', size = 'md', 
   disabled, loading, className = '', type = 'button' 
 }: ButtonProps) {
-  const base = 'inline-flex items-center justify-center font-semibold transition-all duration-150 select-none';
+  const base = 'inline-flex items-center justify-center font-semibold transition-all duration-200 ease-out select-none btn-press';
   const variants = {
-    primary: 'bg-[#3B5BDB] text-white hover:bg-[#3451D0] active:bg-[#2E48BC]',
-    secondary: 'bg-[#EEF2FF] text-[#3B5BDB] hover:bg-[#DBE4FF] active:bg-[#C5D0FF] border border-[#C5D0FF]',
-    ghost: 'bg-transparent text-[#374151] hover:bg-[#F5F7FF] active:bg-[#EEF2FF]',
-    danger: 'bg-[#B91C1C] text-white hover:bg-[#A01818] active:bg-[#8B1414]',
+    primary: 'bg-[#3B5BDB] text-white hover:bg-[#2F4BC0] hover:shadow-lg hover:shadow-[#3B5BDB]/20 active:bg-[#263FA6] active:scale-[0.98]',
+    secondary: 'bg-[#EEF2FF] text-[#3B5BDB] hover:bg-[#DBE4FF] hover:border-[#B4C4FF] active:bg-[#C5D0FF] border border-[#C5D0FF]',
+    ghost: 'bg-transparent text-[#374151] hover:bg-[#F5F7FF] hover:text-[#111827] active:bg-[#EEF2FF]',
+    danger: 'bg-[#B91C1C] text-white hover:bg-[#A01818] hover:shadow-lg hover:shadow-[#B91C1C]/20 active:bg-[#8B1414] active:scale-[0.98]',
   };
   const sizes = {
     sm: 'px-3 py-1.5 text-[11px] rounded-[8px] gap-1.5',

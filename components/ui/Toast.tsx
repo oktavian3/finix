@@ -56,14 +56,17 @@ export function ToastContainer() {
       {toasts.map(toast => (
         <div
           key={toast.id}
-          className={`${bgColors[toast.type]} border rounded-[12px] px-4 py-3 shadow-lg flex items-start gap-3 min-w-[300px] max-w-[400px] animate-slide-up`}
+          className={`${bgColors[toast.type]} border rounded-[12px] px-4 py-3 shadow-lg flex items-start gap-3 min-w-[300px] max-w-[400px] animate-slide-up hover-lift`}
         >
           <div className="mt-0.5">{icons[toast.type]}</div>
           <div className="flex-1">
             <p className="text-[12px] font-semibold text-[#111827]">{toast.message}</p>
             {toast.subtext && <p className="text-[11px] text-[#6B7280] mt-0.5">{toast.subtext}</p>}
           </div>
-          <button onClick={() => removeToast(toast.id)} className="text-[#9CA3AF] hover:text-[#374151]">
+          <button 
+            onClick={() => removeToast(toast.id)} 
+            className="w-6 h-6 flex items-center justify-center rounded-lg text-[#9CA3AF] hover:text-[#374151] hover:bg-black/5 transition-all duration-200"
+          >
             <X size={14} />
           </button>
         </div>
