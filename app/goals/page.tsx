@@ -72,8 +72,8 @@ export default function GoalsPage() {
     return (
       <AppShell title="Goals">
         <div className="flex flex-col items-center justify-center py-24">
-          <Wallet size={48} className="text-[#C5D0FF] mb-4" />
-          <Button size="lg" onClick={connect} loading={isConnecting}><Wallet size={16} /> Connect Wallet</Button>
+          <Wallet size={48} className="text-[#1E293B] mb-4" />
+          <Button size="lg" onClick={connect} loading={isConnecting}><Wallet size={15} /> CONNECT WALLET</Button>
         </div>
       </AppShell>
     );
@@ -82,67 +82,70 @@ export default function GoalsPage() {
   return (
     <AppShell
       title="Goals"
-      subtitle={`${activeGoals.length} Active · ${completedGoals.length} Completed · Saved ${formatCurrency(totalSaved)}`}
+      subtitle={`${activeGoals.length}_ACTIVE // ${completedGoals.length}_COMPLETED // SAVED_${formatCurrency(totalSaved)}`}
       topbarExtra={
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[10px] bg-[#EEF2FF] border border-[#C5D0FF]">
-            <Wallet size={12} className="text-[#3B5BDB]" />
-            <span className="text-[11px] font-medium text-[#374151]">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
+          <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#111827] border border-[#1E293B]">
+            <span className="flex h-[5px] w-[5px] items-center justify-center rounded-full bg-[#15803D] animate-pulse" />
+            <span className="text-[10px] font-mono text-[#9CA3AF]">NODE: {address?.slice(0, 6)}...{address?.slice(-4)}</span>
           </div>
           <Button size="sm" onClick={() => setIsModalOpen(true)}>
-            <Plus size={13} /> New Goal
+            <Plus size={12} /> NEW GOAL
           </Button>
         </div>
       }
     >
       {/* Active Goals */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-3 mb-6">
         {activeGoals.map(g => {
           const progress = g.targetAmount > 0 ? Math.min((g.savedAmount / g.targetAmount) * 100, 100) : 0;
           const remaining = g.targetAmount - g.savedAmount;
           const monthlyIncome = currentSummary.totalIncome * (currentSummary.savingRate / 100);
-          const eta = monthlyIncome > 0
-            ? Math.ceil(remaining / monthlyIncome)
-            : '∞';
+          const eta = monthlyIncome > 0 ? Math.ceil(remaining / monthlyIncome) : '∞';
           return (
-            <div key={g.id} className="bg-white border border-[#E2E8F0] rounded-[12px] p-[18px] group">
-              <div className="flex items-start justify-between mb-3">
+            <div key={g.id} className="bg-[#111827] border border-[#1E293B] p-4 group hover:border-[#334155] transition-colors relative overflow-hidden">
+              <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#3B5BDB]" />
+              <div className="flex items-start justify-between mb-3 pl-2">
                 <div className="flex items-center gap-3">
-                  <span className="text-[28px]">{g.emoji}</span>
+                  <span className="text-[24px]">{g.emoji}</span>
                   <div>
-                    <h3 className="text-[13px] font-semibold text-[#111827]">{g.name}</h3>
-                    <p className="text-[11px] text-[#6B7280]">Saved {formatCurrency(g.savedAmount)} of {formatCurrency(g.targetAmount)}</p>
+                    <h3 className="text-[13px] font-mono font-semibold text-white">{g.name}</h3>
+                    <p className="text-[10px] font-mono text-[#6B7280]">SAVED {formatCurrency(g.savedAmount)} / {formatCurrency(g.targetAmount)}</p>
                   </div>
                 </div>
-                <button onClick={() => handleDelete(g.id)} className="p-1.5 rounded-[6px] text-[#9CA3AF] hover:text-[#B91C1C] opacity-0 group-hover:opacity-100 transition-all">
-                  <Trash2 size={13} />
+                <button onClick={() => handleDelete(g.id)} className="p-1 text-[#6B7280] hover:text-[#B91C1C] opacity-0 group-hover:opacity-100 transition-all">
+                  <Trash2 size={12} />
                 </button>
               </div>
-              <div className="h-3 rounded-full bg-[#EEF2FF] mb-2">
-                <div className="h-3 rounded-full bg-gradient-to-r from-[#3B5BDB] to-[#4F6EF7]" style={{ width: `${progress}%` }} />
+              <div className="h-2 bg-[#1E293B] mb-2 pl-2">
+                <div className="h-2 bg-[#3B5BDB]" style={{ width: `${progress}%` }} />
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-[#3B5BDB]">{progress.toFixed(0)}%</span>
-                <span className="text-[10px] text-[#9CA3AF]">ETA: ~{eta} months</span>
+              <div className="flex items-center justify-between pl-2">
+                <span className="text-[10px] font-mono font-semibold text-[#3B5BDB]">{progress.toFixed(0)}%</span>
+                <span className="text-[9px] font-mono text-[#6B7280]">ETA: ~{eta}MO</span>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Completed Section */}
+      {/* Completed */}
       {completedGoals.length > 0 && (
         <div>
-          <h3 className="text-[13px] font-semibold text-[#111827] mb-3">Completed</h3>
-          <div className="bg-white border border-[#E2E8F0] rounded-[12px] divide-y divide-[#E2E8F0]">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-[10px] font-mono text-[#3B5BDB]">/DONE</span>
+            <h3 className="text-[12px] font-mono font-semibold text-white uppercase tracking-wider">Completed</h3>
+            <div className="flex-1 h-px bg-[#1E293B]" />
+          </div>
+          <div className="bg-[#111827] border border-[#1E293B] divide-y divide-[#1E293B]">
             {completedGoals.map(g => (
               <div key={g.id} className="flex items-center gap-3 px-4 py-3">
-                <span className="text-[20px]">{g.emoji}</span>
+                <span className="text-[18px]">{g.emoji}</span>
                 <div className="flex-1">
-                  <p className="text-[12px] font-medium text-[#111827]">{g.name} ✅</p>
-                  <p className="text-[10px] text-[#9CA3AF]">Completed {g.completedAt}</p>
+                  <p className="text-[11px] font-mono font-medium text-white">{g.name} ✅</p>
+                  <p className="text-[9px] font-mono text-[#6B7280]">COMPLETED {g.completedAt}</p>
                 </div>
-                <span className="text-[11px] font-medium text-[#15803D]">{formatCurrency(g.targetAmount)}</span>
+                <span className="text-[10px] font-mono font-medium text-[#15803D]">{formatCurrency(g.targetAmount)}</span>
               </div>
             ))}
           </div>
@@ -151,39 +154,38 @@ export default function GoalsPage() {
 
       {activeGoals.length === 0 && completedGoals.length === 0 && (
         <div className="text-center py-16">
-          <Target size={48} className="mx-auto text-[#C5D0FF] mb-4" />
-          <h3 className="text-[16px] font-semibold text-[#111827] mb-2">No goals yet</h3>
-          <p className="text-[12px] text-[#6B7280] mb-4">Create your first savings goal</p>
-          <Button onClick={() => setIsModalOpen(true)}><Plus size={14} /> New Goal</Button>
+          <Target size={48} className="mx-auto text-[#1E293B] mb-4" />
+          <h3 className="text-[14px] font-mono font-semibold text-white mb-2">NO_GOALS_YET</h3>
+          <p className="text-[11px] font-mono text-[#6B7280] mb-4">Create your first savings goal</p>
+          <Button onClick={() => setIsModalOpen(true)}><Plus size={13} /> NEW GOAL</Button>
         </div>
       )}
 
-      {/* Add Goal Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="New Goal">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="// NEW_GOAL">
         <div className="space-y-4">
           <div>
-            <label className="text-[11px] font-medium text-[#6B7280] mb-1.5 block">Goal Name</label>
+            <label className="text-[10px] font-mono font-medium text-[#6B7280] mb-1.5 block uppercase tracking-wider">Goal Name</label>
             <input
               type="text"
               placeholder="e.g. iPad Pro"
               value={name}
               onChange={(e) => { setName(e.target.value); setEmoji(suggestEmoji(e.target.value)); }}
-              className="w-full px-3 py-2 text-[13px] border border-[#E2E8F0] rounded-[10px] focus:outline-none focus:border-[#3B5BDB]"
+              className="w-full px-3 py-2 text-[12px] font-mono border border-[#1E293B] bg-[#0A0E1A] text-white focus:outline-none focus:border-[#3B5BDB] placeholder-[#334155]"
             />
           </div>
           <div>
-            <label className="text-[11px] font-medium text-[#6B7280] mb-1.5 block">Emoji</label>
+            <label className="text-[10px] font-mono font-medium text-[#6B7280] mb-1.5 block uppercase tracking-wider">Emoji</label>
             <input
               type="text"
               value={emoji}
               onChange={(e) => setEmoji(e.target.value)}
-              className="w-[80px] px-3 py-2 text-[20px] border border-[#E2E8F0] rounded-[10px] focus:outline-none focus:border-[#3B5BDB] text-center"
+              className="w-[80px] px-3 py-2 text-[18px] border border-[#1E293B] bg-[#0A0E1A] text-white focus:outline-none focus:border-[#3B5BDB] text-center"
               maxLength={2}
             />
-            <p className="text-[10px] text-[#9CA3AF] mt-1">Auto-suggested based on name</p>
+            <p className="text-[9px] font-mono text-[#6B7280] mt-1">AUTO_SUGGESTED</p>
           </div>
           <div>
-            <label className="text-[11px] font-medium text-[#6B7280] mb-1.5 block">Target Amount (USD)</label>
+            <label className="text-[10px] font-mono font-medium text-[#6B7280] mb-1.5 block uppercase tracking-wider">Target Amount (USD)</label>
             <input
               type="number"
               min="0"
@@ -191,11 +193,11 @@ export default function GoalsPage() {
               placeholder="1200"
               value={target}
               onChange={(e) => setTarget(e.target.value)}
-              className="w-full px-3 py-2 text-[13px] border border-[#E2E8F0] rounded-[10px] focus:outline-none focus:border-[#3B5BDB]"
+              className="w-full px-3 py-2 text-[12px] font-mono border border-[#1E293B] bg-[#0A0E1A] text-white focus:outline-none focus:border-[#3B5BDB] placeholder-[#334155]"
             />
           </div>
           <Button onClick={handleAdd} disabled={!name || !target} className="w-full">
-            <Target size={14} /> Create Goal
+            <Target size={13} /> CREATE GOAL
           </Button>
         </div>
       </Modal>

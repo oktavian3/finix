@@ -17,17 +17,17 @@ export function Button({
   children, onClick, variant = 'primary', size = 'md', 
   disabled, loading, className = '', type = 'button' 
 }: ButtonProps) {
-  const base = 'inline-flex items-center justify-center font-semibold transition-all duration-150 select-none';
+  const base = 'inline-flex items-center justify-center font-semibold transition-all duration-150 select-none rounded-none';
   const variants = {
-    primary: 'bg-[#3B5BDB] text-white hover:bg-[#3451D0] active:bg-[#2E48BC]',
-    secondary: 'bg-[#EEF2FF] text-[#3B5BDB] hover:bg-[#DBE4FF] active:bg-[#C5D0FF] border border-[#C5D0FF]',
-    ghost: 'bg-transparent text-[#374151] hover:bg-[#F5F7FF] active:bg-[#EEF2FF]',
-    danger: 'bg-[#B91C1C] text-white hover:bg-[#A01818] active:bg-[#8B1414]',
+    primary: 'bg-[#3B5BDB] text-white hover:bg-[#4F6EF7] hover:shadow-[0_0_20px_rgba(59,91,219,0.4)] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] border border-[#4F6EF7]',
+    secondary: 'bg-transparent text-[#3B5BDB] hover:bg-[#3B5BDB]/10 hover:shadow-[0_0_15px_rgba(59,91,219,0.2)] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] border border-[#3B5BDB]',
+    ghost: 'bg-transparent text-[#9CA3AF] hover:text-white hover:bg-[#1E293B] active:bg-[#334155]',
+    danger: 'bg-[#B91C1C] text-white hover:bg-[#DC2626] hover:shadow-[0_0_15px_rgba(185,28,28,0.4)] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] border border-[#DC2626]',
   };
   const sizes = {
-    sm: 'px-3 py-1.5 text-[11px] rounded-[8px] gap-1.5',
-    md: 'px-4 py-2 text-[12px] rounded-[10px] gap-2',
-    lg: 'px-5 py-2.5 text-[13px] rounded-[12px] gap-2',
+    sm: 'px-3 py-1.5 text-[11px] gap-1.5',
+    md: 'px-4 py-2 text-[12px] gap-2',
+    lg: 'px-5 py-2.5 text-[13px] gap-2',
   };
 
   return (

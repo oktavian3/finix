@@ -12,10 +12,13 @@ export function GoalsPreview({ goals }: GoalsPreviewProps) {
   const active = goals.filter(g => !g.completedAt).slice(0, 3);
 
   return (
-    <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-[18px]">
+    <div className="bg-[#111827] border border-[#1E293B] p-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-[14px] font-semibold text-[#111827]">Goals</h3>
-        <Link href="/goals" className="text-[11px] text-[#3B5BDB] font-medium hover:underline">View all</Link>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-mono text-[#3B5BDB]">/GOALS</span>
+          <h3 className="text-[12px] font-mono font-semibold text-white uppercase tracking-wider">Goals</h3>
+        </div>
+        <Link href="/goals" className="text-[10px] font-mono text-[#3B5BDB] hover:text-[#4F6EF7] transition-colors">VIEW_ALL</Link>
       </div>
       <div className="space-y-3">
         {active.map(g => {
@@ -23,16 +26,16 @@ export function GoalsPreview({ goals }: GoalsPreviewProps) {
           return (
             <div key={g.id}>
               <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <span>{g.emoji}</span>
-                  <span className="text-[12px] font-medium text-[#111827]">{g.name}</span>
+                  <span className="text-[11px] font-mono text-white">{g.name}</span>
                 </div>
-                <span className="text-[11px] text-[#6B7280]">{progress.toFixed(0)}%</span>
+                <span className="text-[10px] font-mono text-[#6B7280]">{progress.toFixed(0)}%</span>
               </div>
-              <div className="h-2 rounded-full bg-[#EEF2FF]">
-                <div className="h-2 rounded-full bg-gradient-to-r from-[#3B5BDB] to-[#4F6EF7]" style={{ width: `${progress}%` }} />
+              <div className="h-1.5 bg-[#1E293B]">
+                <div className="h-1.5 bg-[#3B5BDB]" style={{ width: `${progress}%` }} />
               </div>
-              <p className="text-[10px] text-[#9CA3AF] mt-0.5">{formatCurrency(g.savedAmount)} of {formatCurrency(g.targetAmount)}</p>
+              <p className="text-[9px] font-mono text-[#6B7280] mt-0.5">{formatCurrency(g.savedAmount)} / {formatCurrency(g.targetAmount)}</p>
             </div>
           );
         })}

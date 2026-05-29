@@ -28,8 +28,8 @@ export default function AchievementsPage() {
     return (
       <AppShell title="Achievements">
         <div className="flex flex-col items-center justify-center py-24">
-          <Wallet size={48} className="text-[#C5D0FF] mb-4" />
-          <Button size="lg" onClick={connect} loading={isConnecting}><Wallet size={16} /> Connect Wallet</Button>
+          <Wallet size={48} className="text-[#1E293B] mb-4" />
+          <Button size="lg" onClick={connect} loading={isConnecting}><Wallet size={15} /> CONNECT WALLET</Button>
         </div>
       </AppShell>
     );
@@ -38,67 +38,83 @@ export default function AchievementsPage() {
   return (
     <AppShell
       title="Achievements"
-      subtitle={`${data.streaks.currentStreak} day streak · ${earnedCount}/${totalBadges} badges earned`}
+      subtitle={`${data.streaks.currentStreak}D_STREAK // ${earnedCount}/${totalBadges}_BADGES`}
       topbarExtra={
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[10px] bg-[#EEF2FF] border border-[#C5D0FF]">
-            <Wallet size={12} className="text-[#3B5BDB]" />
-            <span className="text-[11px] font-medium text-[#374151]">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
-          </div>
+        <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#111827] border border-[#1E293B]">
+          <span className="flex h-[5px] w-[5px] items-center justify-center rounded-full bg-[#15803D] animate-pulse" />
+          <span className="text-[10px] font-mono text-[#9CA3AF]">NODE: {address?.slice(0, 6)}...{address?.slice(-4)}</span>
         </div>
       }
     >
-      {/* Stat Streaks */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4 text-center">
-          <Flame size={20} className="mx-auto text-[#C2410C] mb-1" />
-          <p className="text-[20px] font-bold text-[#111827]">{data.streaks.currentStreak}</p>
-          <p className="text-[10px] text-[#6B7280]">Current streak</p>
+      {/* Section /01 — Streak Stats */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[10px] font-mono text-[#3B5BDB]">/01</span>
+          <span className="text-[10px] font-mono text-[#6B7280] uppercase tracking-wider">STREAKS</span>
+          <div className="flex-1 h-px bg-[#1E293B]" />
         </div>
-        <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4 text-center">
-          <Medal size={20} className="mx-auto text-[#D97706] mb-1" />
-          <p className="text-[20px] font-bold text-[#111827]">{data.streaks.longestStreak}</p>
-          <p className="text-[10px] text-[#6B7280]">Longest streak</p>
-        </div>
-        <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4 text-center">
-          <Banknote size={20} className="mx-auto text-[#15803D] mb-1" />
-          <p className="text-[20px] font-bold text-[#111827]">{data.transactions.length}</p>
-          <p className="text-[10px] text-[#6B7280]">Transactions</p>
-        </div>
-        <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4 text-center">
-          <Trophy size={20} className="mx-auto text-[#3B5BDB] mb-1" />
-          <p className="text-[20px] font-bold text-[#111827]">{earnedCount}/{totalBadges}</p>
-          <p className="text-[10px] text-[#6B7280]">Badges earned</p>
+        <div className="grid grid-cols-4 gap-3">
+          <div className="bg-[#111827] border border-[#1E293B] p-4 text-center relative overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#C2410C]" />
+            <Flame size={18} className="mx-auto text-[#C2410C] mb-1" />
+            <p className="text-[18px] font-mono font-bold text-white">{data.streaks.currentStreak}</p>
+            <p className="text-[9px] font-mono text-[#6B7280] uppercase">CURRENT</p>
+          </div>
+          <div className="bg-[#111827] border border-[#1E293B] p-4 text-center relative overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#D97706]" />
+            <Medal size={18} className="mx-auto text-[#D97706] mb-1" />
+            <p className="text-[18px] font-mono font-bold text-white">{data.streaks.longestStreak}</p>
+            <p className="text-[9px] font-mono text-[#6B7280] uppercase">LONGEST</p>
+          </div>
+          <div className="bg-[#111827] border border-[#1E293B] p-4 text-center relative overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#15803D]" />
+            <Banknote size={18} className="mx-auto text-[#15803D] mb-1" />
+            <p className="text-[18px] font-mono font-bold text-white">{data.transactions.length}</p>
+            <p className="text-[9px] font-mono text-[#6B7280] uppercase">TRANSACTIONS</p>
+          </div>
+          <div className="bg-[#111827] border border-[#1E293B] p-4 text-center relative overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#3B5BDB]" />
+            <Trophy size={18} className="mx-auto text-[#3B5BDB] mb-1" />
+            <p className="text-[18px] font-mono font-bold text-white">{earnedCount}/{totalBadges}</p>
+            <p className="text-[9px] font-mono text-[#6B7280] uppercase">BADGES</p>
+          </div>
         </div>
       </div>
 
-      {/* Badge Grid */}
-      <div className="grid grid-cols-4 gap-4">
-        {badges.map(badge => {
-          const isEarned = data.achievements[badge.id as keyof typeof data.achievements];
-          const Icon = badge.icon;
-          return (
-            <div
-              key={badge.id}
-              className={`border rounded-[12px] p-5 transition-all ${
-                isEarned
-                  ? 'bg-white border-[#E2E8F0]'
-                  : 'bg-[#F9FAFB] border-[#E2E8F0] opacity-60'
-              }`}
-            >
-              <div className={`mb-3 ${isEarned ? 'text-[#3B5BDB]' : 'text-[#D1D5DB]'}`}>
-                <Icon size={32} className={isEarned ? '' : 'grayscale'} />
+      {/* Section /02 — Badge Grid */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[10px] font-mono text-[#3B5BDB]">/02</span>
+          <span className="text-[10px] font-mono text-[#6B7280] uppercase tracking-wider">BADGES</span>
+          <div className="flex-1 h-px bg-[#1E293B]" />
+        </div>
+        <div className="grid grid-cols-4 gap-3">
+          {badges.map(badge => {
+            const isEarned = data.achievements[badge.id as keyof typeof data.achievements];
+            const Icon = badge.icon;
+            return (
+              <div
+                key={badge.id}
+                className={`border p-4 transition-all duration-150 ${
+                  isEarned
+                    ? 'bg-[#111827] border-[#1E293B] hover:border-[#334155]'
+                    : 'bg-[#0A0E1A]/50 border-[#1E293B]/50 opacity-50'
+                }`}
+              >
+                <div className={`mb-2 ${isEarned ? 'text-[#3B5BDB]' : 'text-[#334155]'}`}>
+                  <Icon size={28} className={isEarned ? '' : 'grayscale'} />
+                </div>
+                <h4 className={`text-[11px] font-mono font-semibold ${isEarned ? 'text-white' : 'text-[#6B7280]'}`}>
+                  {badge.name.toUpperCase()}
+                </h4>
+                <p className={`text-[10px] font-mono mt-1 ${isEarned ? 'text-[#9CA3AF]' : 'text-[#334155]'}`}>
+                  {isEarned ? badge.desc : badge.hint}
+                </p>
+                {isEarned && <span className="mt-1.5 inline-block text-[9px] font-mono text-[#15803D] font-medium">✓ EARNED</span>}
               </div>
-              <h4 className={`text-[13px] font-semibold ${isEarned ? 'text-[#111827]' : 'text-[#9CA3AF]'}`}>
-                {badge.name}
-              </h4>
-              <p className={`text-[11px] mt-1 ${isEarned ? 'text-[#6B7280]' : 'text-[#D1D5DB]'}`}>
-                {isEarned ? badge.desc : badge.hint}
-              </p>
-              {isEarned && <span className="mt-2 text-[11px] text-[#15803D] font-medium">✓ Earned</span>}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </AppShell>
   );

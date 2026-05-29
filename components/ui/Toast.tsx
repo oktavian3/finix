@@ -38,15 +38,15 @@ export function ToastContainer() {
   };
 
   const icons = {
-    success: <CheckCircle size={16} className="text-[#15803D]" />,
-    error: <XCircle size={16} className="text-[#B91C1C]" />,
-    info: <AlertCircle size={16} className="text-[#3B5BDB]" />,
+    success: <CheckCircle size={15} className="text-[#15803D]" />,
+    error: <XCircle size={15} className="text-[#B91C1C]" />,
+    info: <AlertCircle size={15} className="text-[#3B5BDB]" />,
   };
 
-  const bgColors = {
-    success: 'bg-[#F0FDF4] border-[#BBF7D0]',
-    error: 'bg-[#FEF2F2] border-[#FECACA]',
-    info: 'bg-[#EFF6FF] border-[#BFDBFE]',
+  const accentColors = {
+    success: 'border-l-[#15803D]',
+    error: 'border-l-[#B91C1C]',
+    info: 'border-l-[#3B5BDB]',
   };
 
   if (toasts.length === 0) return null;
@@ -56,15 +56,15 @@ export function ToastContainer() {
       {toasts.map(toast => (
         <div
           key={toast.id}
-          className={`${bgColors[toast.type]} border rounded-[12px] px-4 py-3 shadow-lg flex items-start gap-3 min-w-[300px] max-w-[400px] animate-slide-up`}
+          className={`bg-[#111827] border border-[#1E293B] ${accentColors[toast.type]} border-l-2 rounded-none px-4 py-3 shadow-lg flex items-start gap-3 min-w-[300px] max-w-[400px] animate-slide-up`}
         >
           <div className="mt-0.5">{icons[toast.type]}</div>
           <div className="flex-1">
-            <p className="text-[12px] font-semibold text-[#111827]">{toast.message}</p>
-            {toast.subtext && <p className="text-[11px] text-[#6B7280] mt-0.5">{toast.subtext}</p>}
+            <p className="text-[12px] font-semibold text-white">{toast.message}</p>
+            {toast.subtext && <p className="text-[10px] font-mono text-[#6B7280] mt-0.5">{toast.subtext}</p>}
           </div>
-          <button onClick={() => removeToast(toast.id)} className="text-[#9CA3AF] hover:text-[#374151]">
-            <X size={14} />
+          <button onClick={() => removeToast(toast.id)} className="text-[#6B7280] hover:text-white transition-colors">
+            <X size={13} />
           </button>
         </div>
       ))}

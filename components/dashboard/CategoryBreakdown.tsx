@@ -30,9 +30,12 @@ export function CategoryBreakdown({ byCategory, totalExpense, transactions = [] 
     .sort(([, a], [, b]) => b - a);
 
   return (
-    <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-[18px]">
-      <h3 className="text-[14px] font-semibold text-[#111827] mb-4">Spending by Category</h3>
-      <div className="space-y-2">
+    <div className="bg-[#111827] border border-[#1E293B] p-4">
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-[10px] font-mono text-[#3B5BDB]">/CAT</span>
+        <h3 className="text-[12px] font-mono font-semibold text-white uppercase tracking-wider">Spending by Category</h3>
+      </div>
+      <div className="space-y-1.5">
         {sorted.map(([cat, amount]) => {
           const config = categoryConfig[cat] || categoryConfig.other;
           const percentage = totalExpense > 0 ? (amount / totalExpense) * 100 : 0;
@@ -43,24 +46,24 @@ export function CategoryBreakdown({ byCategory, totalExpense, transactions = [] 
           return (
             <div key={cat}>
               <div
-                className="flex items-center gap-3 px-3 py-2 rounded-[8px] hover:bg-[#F8FAFC] cursor-pointer transition-colors"
+                className="flex items-center gap-2 px-2 py-1.5 hover:bg-[#1E293B]/50 cursor-pointer transition-colors"
                 onClick={() => setExpandedCat(isExpanded ? null : cat)}
               >
-                <Icon size={13} color={config.color} />
-                <span className="flex-1 text-[12px] font-medium text-[#374151]">{config.label}</span>
-                <span className="text-[12px] font-semibold text-[#111827]">{formatCurrency(amount)}</span>
-                <span className="text-[11px] text-[#6B7280] w-[40px] text-right">{percentage.toFixed(0)}%</span>
-                <div className="w-[60px] h-1.5 rounded-full bg-[#EEF2FF]">
-                  <div className="h-1.5 rounded-full" style={{ width: `${percentage}%`, backgroundColor: config.color }} />
+                <Icon size={12} color={config.color} />
+                <span className="flex-1 text-[11px] font-mono text-[#9CA3AF]">{config.label}</span>
+                <span className="text-[11px] font-mono font-semibold text-white">{formatCurrency(amount)}</span>
+                <span className="text-[10px] font-mono text-[#6B7280] w-[36px] text-right">{percentage.toFixed(0)}%</span>
+                <div className="w-[50px] h-1 bg-[#1E293B]">
+                  <div className="h-1" style={{ width: `${percentage}%`, backgroundColor: config.color }} />
                 </div>
-                {isExpanded ? <ChevronDown size={13} className="text-[#9CA3AF]" /> : <ChevronRight size={13} className="text-[#9CA3AF]" />}
+                {isExpanded ? <ChevronDown size={12} className="text-[#6B7280]" /> : <ChevronRight size={12} className="text-[#6B7280]" />}
               </div>
               {isExpanded && catTransactions.length > 0 && (
-                <div className="ml-9 pl-3 border-l-2 border-[#EEF2FF] space-y-1 pb-1">
+                <div className="ml-7 pl-2 border-l border-[#1E293B] space-y-0.5 pb-1">
                   {catTransactions.slice(0, 5).map(t => (
-                    <div key={t.id} className="flex items-center justify-between py-1">
-                      <span className="text-[11px] text-[#6B7280]">{t.description || '—'}</span>
-                      <span className="text-[11px] font-medium text-[#B91C1C]">{formatCurrency(t.amount)}</span>
+                    <div key={t.id} className="flex items-center justify-between py-0.5">
+                      <span className="text-[10px] font-mono text-[#6B7280]">{t.description || '—'}</span>
+                      <span className="text-[10px] font-mono font-medium text-[#B91C1C]">{formatCurrency(t.amount)}</span>
                     </div>
                   ))}
                 </div>
