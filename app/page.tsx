@@ -1,14 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useWallet } from "@/hooks/useWallet";
 import { useFinixData } from "@/hooks/useFinixData";
-import { ArrowRight, Shield, Wallet, Waves, Database, Loader2 } from "lucide-react";
+import { ArrowRight, Shield, Wallet, Waves, Database, Loader2, AlertTriangle, X } from "lucide-react";
 
 export default function Home() {
   const { isConnected, connect, isConnecting, address } = useWallet();
   const { connectWallet, isLoading } = useFinixData();
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -19,11 +20,41 @@ export default function Home() {
     }
   }, [isConnected, address, isLoading, connectWallet, router]);
 
+  const handleConnect = async () => {
+    setError(null);
+    try {
+      await connect();
+    } catch (err: any) {
+      setError(err?.message || 'Failed to connect wallet');
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#EEF2FF] p-8">
       <section className="mx-auto flex min-h-[calc(100vh-64px)] max-w-[1120px] items-center">
         <div className="grid w-full grid-cols-[0.95fr_1.05fr] overflow-hidden rounded-[26px] border border-[#E2E8F0] bg-white shadow-[0_24px_80px_rgba(15,23,42,0.12)]">
           {/* Left */}
+          {error && (
+            <div className="fixed top-4 right-4 z-50 flex items-start gap-3 rounded-[12px] border border-red-200 bg-red-50 p-4 shadow-lg max-w-sm">
+              <AlertTriangle size={18} className="mt-0.5 shrink-0 text-red-500" />
+              <div className="min-w-0">
+                <p className="text-[13px] font-semibold text-red-800">Connection Failed</p>
+                <p className="mt-1 text-[12px] leading-5 text-red-700">{error}</p>
+                <button
+                  onClick={() => {
+                    // Re-check if wallet is installed
+                    window.location.reload();
+                  }}
+                  className="mt-2 text-[12px] font-medium text-red-600 underline hover:text-red-800"
+                >
+                  Reload page & try again
+                </button>
+              </div>
+              <button onClick={() => setError(null)} className="shrink-0">
+                <X size={16} className="text-red-400 hover:text-red-600" />
+              </button>
+            </div>
+          )}
           <div className="flex min-h-[620px] flex-col p-10">
             <div className="flex items-center gap-2">
               <img src="/finix-logo.png" alt="Finix" className="w-8 h-8 rounded-lg object-cover" />
@@ -53,7 +84,7 @@ export default function Home() {
                   </button>
                 ) : (
                   <button
-                    onClick={() => connect()}
+                    onClick={handleConnect}
                     className="inline-flex items-center gap-2 px-6 py-3 bg-[#3B5BDB] text-white rounded-[10px] text-[13px] font-semibold hover:bg-[#3451D0] active:bg-[#2E48BC] transition-colors duration-150 cursor-pointer z-10 relative"
                   >
                     <Wallet size={16} />
