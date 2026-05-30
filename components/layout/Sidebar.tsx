@@ -25,9 +25,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="px-5 pt-6 pb-4">
         <Link href="/dashboard" className="flex items-center gap-2 group">
-          <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#3B5BDB] text-white text-xs font-bold transition-transform duration-200 group-hover:scale-110">
-            F
-          </span>
+          <img src="/finix-logo.png" alt="Finix" className="w-7 h-7 rounded-lg object-cover transition-transform duration-200 group-hover:scale-110" />
           <span className="text-[16px] font-semibold text-[#111827] transition-colors duration-200 group-hover:text-[#3B5BDB]">Finix</span>
         </Link>
       </div>

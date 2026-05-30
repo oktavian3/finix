@@ -25,9 +25,7 @@ export default function Home() {
           {/* Left */}
           <div className="flex min-h-[620px] flex-col p-10">
             <div className="flex items-center gap-2">
-              <span className="fx-logo-mark flex items-center justify-center w-8 h-8 rounded-lg bg-[#3B5BDB] text-white text-sm font-bold">
-                F
-              </span>
+              <img src="/finix-logo.png" alt="Finix" className="w-8 h-8 rounded-lg object-cover" />
               <span className="text-[16px] font-semibold text-[#111827]">Finix</span>
             </div>
 
