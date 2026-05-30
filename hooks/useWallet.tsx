@@ -2,176 +2,223 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 
+interface WalletAccount {
+  address: string;
+  publicKey?: Uint8Array;
+  chains?: string[];
+  label?: string;
+  icon?: string;
+}
+
+interface StandardConnectFeature {
+  version: string;
+  connect: () => Promise<{ accounts: WalletAccount[] }>;
+}
+
+interface StandardDisconnectFeature {
+  version: string;
+  disconnect: () => Promise<void>;
+}
+
+interface StandardEventsFeature {
+  version: string;
+  on: (event: string, cb: (args: { accounts?: WalletAccount[] }) => void) => () => void;
+}
+
+interface SuiSignPersonalMessageFeature {
+  version: string;
+  signPersonalMessage: (input: { message: Uint8Array }) => Promise<{ bytes: string; signature: string }>;
+}
+
+interface SuiSignAndExecuteTransactionFeature {
+  version: string;
+  signAndExecuteTransaction: (input: {
+    transaction: Uint8Array;
+    chain: string;
+    requestType?: string;
+    options?: { showEffects?: boolean; showEvents?: boolean; showObjectChanges?: boolean };
+  }) => Promise<unknown>;
+}
+
+interface SuiWallet {
+  name: string;
+  icon: string;
+  version: string;
+  accounts: readonly WalletAccount[];
+  chains: string[];
+  features: Record<string, unknown>;
+}
+
 interface WalletContextType {
   isConnected: boolean;
   address: string | null;
   isConnecting: boolean;
   isInstalled: boolean;
+  walletName: string | null;
   connect: () => Promise<void>;
   disconnect: () => void;
+  signAndExecuteTransaction: ((input: { transaction: Uint8Array; chain: string; requestType?: string; options?: { showEffects?: boolean; showEvents?: boolean; showObjectChanges?: boolean } }) => Promise<unknown>) | null;
 }
 
 const WalletContext = createContext<WalletContextType | null>(null);
 
-// Wallet Standard API — detects any wallet extension (Sui Wallet, Suiet, etc.)
-// https://github.com/wallet-standard/wallet-standard
+function detectWallets(): SuiWallet[] {
+  const wallets: SuiWallet[] = [];
 
-interface WalletAccount {
-  address: string;
-  publicKey?: Uint8Array;
-  chains?: string[];
-  features?: string[];
-  label?: string;
-  icon?: string;
+  // Check for Wallet Standard wallets (modern Sui wallets like Slush)
+  try {
+    const walletStdNS = (navigator as any).wallets;
+    const rawWallets: any[] = [];
+
+    if (walletStdNS && typeof walletStdNS.get === 'function') {
+      rawWallets.push(...walletStdNS.get());
+    }
+
+    // Also check wallet-standard API from @mysten/wallet-standard
+    // Some wallets inject via window event
+    rawWallets.forEach((w: any) => {
+      if (
+        w &&
+        w.chains?.some((c: string) => c.startsWith('sui:'))
+      ) {
+        wallets.push({
+          name: w.name || 'Unknown',
+          icon: w.icon || '',
+          version: w.version || '1',
+          accounts: w.accounts || [],
+          chains: w.chains || [],
+          features: w.features || {},
+        });
+      }
+    });
+  } catch { /* ignore */ }
+
+  // Legacy: check window.suiWallet (older wallets)
+  try {
+    const legacy = (window as any).suiWallet as SuiWallet | undefined;
+    if (legacy && !wallets.find(w => w.name === legacy.name)) {
+      wallets.push(legacy);
+    }
+  } catch { /* ignore */ }
+
+  return wallets;
 }
 
-interface WalletFeature {
-  version: string;
-  accounts: readonly WalletAccount[];
-  // EIP-1193 style connect
-  connect?: () => Promise<WalletAccount[]>;
-  // Some wallets use 'standard:connect' feature
-  'standard:connect'?: {
-    connect: () => Promise<WalletAccount[]>;
-  };
-  // Some wallets expose direct features
-  [key: string]: unknown;
-}
+function findSuiWallet(): SuiWallet | null {
+  const wallets = detectWallets();
 
-interface Wallet {
-  name: string;
-  icon: string;
-  version: string;
-  features: WalletFeature;
-  accounts: readonly WalletAccount[];
-}
+  if (wallets.length === 0) return null;
 
-interface WalletWindow extends Window {
-  suiWallet?: Wallet;
-  // Sui Wallet Standard v2
-  walletStandard?: {
-    getWallets: () => {
-      on: (event: string, cb: (wallets: Wallet[]) => void) => void;
-      get: () => Wallet[];
-    };
-  };
-}
+  // Prefer Slush if available
+  const slush = wallets.find(w => w.name.toLowerCase().includes('slush'));
+  if (slush) return slush;
 
-/** Aggressively detect any Sui wallet — tries every known API surface */
-function findWallet(): Wallet | null {
-  const w = window as unknown as WalletWindow;
-
-  // 1. Direct suiWallet injection (Sui Wallet extension)
-  if (w.suiWallet) return w.suiWallet;
-
-  // 2. Wallet Standard API (navigator.wallet)
-  if ('wallet' in navigator) {
-    try {
-      const std = (navigator as any).wallet;
-      const wallets = std?.getWallets?.()?.get?.() || [];
-      const suiWallet = wallets.find((x: Wallet) =>
-        x.name?.toLowerCase().includes('sui')
-      );
-      if (suiWallet) return suiWallet;
-    } catch { /* ignore */ }
-  }
-
-  // 3. walletStandard global
-  if (w.walletStandard) {
-    try {
-      const wallets = w.walletStandard.getWallets().get();
-      const suiWallet = wallets.find((x: Wallet) =>
-        x.name?.toLowerCase().includes('sui')
-      );
-      if (suiWallet) return suiWallet;
-    } catch { /* ignore */ }
-  }
-
-  return null;
+  // Otherwise first Sui wallet
+  return wallets[0];
 }
 
 function isWalletInstalled(): boolean {
-  try {
-    return findWallet() !== null;
-  } catch {
-    return false;
-  }
+  return findSuiWallet() !== null;
 }
 
-async function requestConnection(): Promise<string> {
-  const wallet = findWallet();
-  if (!wallet) throw new Error('Sui Wallet not detected. Please install the Sui Wallet browser extension.');
-
-  // Log available features for debugging
-  console.log('[Finix] Wallet found:', wallet.name, 'Features:', Object.keys(wallet.features || {}));
-
-  let connected = false;
-
-  // Strategy 1: Try 'standard:connect' feature (Wallet Standard v2)
-  const standardConnect = wallet.features?.['standard:connect'];
-  if (standardConnect && typeof standardConnect.connect === 'function') {
-    await standardConnect.connect();
-    connected = true;
-  }
-
-  // Strategy 2: Try direct connect function on features
-  if (!connected && typeof wallet.features?.connect === 'function') {
-    await wallet.features.connect();
-    connected = true;
-  }
-
-  // Strategy 3: Try 'sui:signPersonalMessage' or similar — sometimes you need
-  // to trigger any action to prompt the user
-  if (!connected) {
-    // For some wallets, just reading accounts triggers the popup
-    // or we can try requesting via window.postMessage
-    // Sui Wallet listens for 'wallet-standard:connect' events
-    window.dispatchEvent(new CustomEvent('wallet-standard:connect', {
-      detail: { wallet: wallet.name }
-    }));
-    connected = true;
-  }
-
-  // Wait for wallet to process and return accounts
-  await new Promise(r => setTimeout(r, 800));
-
-  // Re-read wallet state
-  const updated = findWallet();
-  const account = updated?.accounts?.[0];
-  if (account?.address) {
-    console.log('[Finix] Connected:', account.address);
-    return account.address;
-  }
-
-  // Last resort: try reading from features accounts
-  if (standardConnect && Array.isArray(standardConnect.accounts)) {
-    const addr = standardConnect.accounts[0]?.address;
-    if (addr) return addr;
-  }
-
-  throw new Error('Connection cancelled or no accounts found. Please make sure Sui Wallet is unlocked.');
-}
+let walletListenersAttached = false;
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
   const [address, setAddress] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [walletName, setWalletName] = useState<string | null>(null);
+  const [wallet, setWallet] = useState<SuiWallet | null>(null);
+  const [signAndExecuteTransaction, setSignAndExecuteTransaction] = useState<WalletContextType['signAndExecuteTransaction']>(null);
 
+  // Poll for wallet installation (Brave may delay injection)
   useEffect(() => {
-    setIsInstalled(isWalletInstalled());
+    let attempts = 0;
+    const poll = setInterval(() => {
+      const w = findSuiWallet();
+      if (w) {
+        setWallet(w);
+        setWalletName(w.name);
+        setIsInstalled(true);
+        clearInterval(poll);
+      }
+      attempts++;
+      if (attempts > 50) clearInterval(poll); // ~5s max
+    }, 100);
+
+    return () => clearInterval(poll);
   }, []);
+
+  // Listen for wallet-standard register events
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.name) {
+        setWalletName(detail.name);
+        setIsInstalled(true);
+        // Try to get accounts
+        if (detail.accounts?.length > 0) {
+          setAddress(detail.accounts[0].address);
+          setIsConnected(true);
+        }
+      }
+    };
+
+    window.addEventListener('wallet-standard:register', handler);
+    return () => window.removeEventListener('wallet-standard:register', handler);
+  }, []);
+
+  // Try to restore previous session (wallet already authorized)
+  useEffect(() => {
+    if (wallet && wallet.accounts?.length > 0) {
+      const addr = wallet.accounts[0].address;
+      if (addr) {
+        setAddress(addr);
+        setIsConnected(true);
+      }
+    }
+  }, [wallet]);
 
   const connect = useCallback(async () => {
     setIsConnecting(true);
     try {
-      if (!isWalletInstalled()) {
-        throw new Error('Sui Wallet not detected.\n\nPlease install the Sui Wallet browser extension:\nhttps://chromewebstore.google.com/detail/sui-wallet/bhjddfmbceejlnhkmfnfdojkdfpenjhi');
+      const w = findSuiWallet();
+      if (!w) {
+        throw new Error(
+          'Sui Wallet not detected.\n\n' +
+          'If you have Slush Wallet installed:\n' +
+          '1. Make sure Slush is unlocked\n' +
+          '2. In Brave, click the Shields icon and turn Shields OFF for this site\n' +
+          '3. Refresh the page\n\n' +
+          'If you don\'t have a Sui wallet, install Slush Wallet:\n' +
+          'https://chromewebstore.google.com/detail/slush-sui-wallet/ahankfimgcojpdlbephobhdmhpgcghme'
+        );
       }
 
-      const addr = await requestConnection();
-      setAddress(addr);
-      setIsConnected(true);
+      // Try standard:connect feature (Wallet Standard proper)
+      const connectFeature = w.features?.['standard:connect'] as any;
+      if (connectFeature?.connect) {
+        const result = await connectFeature.connect();
+        const accounts = (result as any)?.accounts || result || [];
+        if (Array.isArray(accounts) && accounts.length > 0) {
+          const addr = accounts[0]?.address || accounts[0];
+          if (addr) {
+            setAddress(String(addr));
+            setIsConnected(true);
+            return;
+          }
+        }
+      }
+
+      // If wallet already has accounts (previously authorized), use those
+      if (w.accounts?.length > 0 && w.accounts[0].address) {
+        setAddress(w.accounts[0].address);
+        setIsConnected(true);
+        return;
+      }
+
+      throw new Error('Connection failed. Please unlock Slush Wallet and try again.');
     } catch (err) {
       console.error('[Finix] Wallet connection failed:', err);
       throw err;
@@ -180,13 +227,40 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const disconnect = useCallback(() => {
+  const disconnect = useCallback(async () => {
+    try {
+      const w = findSuiWallet();
+      const disconnectFeature = w?.features?.['standard:disconnect'] as StandardDisconnectFeature | undefined;
+      if (disconnectFeature?.disconnect) {
+        await disconnectFeature.disconnect();
+      }
+    } catch { /* ignore */ }
     setAddress(null);
     setIsConnected(false);
   }, []);
 
+  // Set up signAndExecuteTransaction from wallet features
+  useEffect(() => {
+    if (!wallet) return;
+    const suiFeature = wallet.features?.['sui:signAndExecuteTransaction'] as any;
+    if (suiFeature?.signAndExecuteTransaction) {
+      setSignAndExecuteTransaction(() => (input: any) => suiFeature.signAndExecuteTransaction(input));
+    }
+  }, [wallet]);
+
   return (
-    <WalletContext.Provider value={{ isConnected, address, isConnecting, isInstalled, connect, disconnect }}>
+    <WalletContext.Provider
+      value={{
+        isConnected,
+        address,
+        isConnecting,
+        isInstalled,
+        walletName,
+        connect,
+        disconnect,
+        signAndExecuteTransaction,
+      }}
+    >
       {children}
     </WalletContext.Provider>
   );

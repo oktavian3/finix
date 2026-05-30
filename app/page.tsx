@@ -24,8 +24,8 @@ export default function Home() {
     setError(null);
     try {
       await connect();
-    } catch (err: any) {
-      setError(err?.message || 'Failed to connect wallet');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to connect wallet');
     }
   };
 
