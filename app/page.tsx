@@ -53,9 +53,10 @@ export default function Home() {
                     Loading...
                   </button>
                 ) : (
-                  <div className="[&_button]:!inline-flex [&_button]:!items-center [&_button]:!gap-2 [&_button]:!px-6 [&_button]:!py-3 [&_button]:!bg-[#3B5BDB] [&_button]:!text-white [&_button]:!rounded-[10px] [&_button]:!text-[13px] [&_button]:!font-semibold [&_button]:!border-none [&_button]:!shadow-none">
-                    <ConnectButton connectText={<span className="flex items-center gap-2"><Wallet size={16} /> Connect Wallet</span>} />
-                  </div>
+                  <ConnectButton
+                    connectText={<span className="flex items-center gap-2"><Wallet size={16} /> Connect Wallet</span>}
+                    className="!inline-flex !items-center !gap-2 !px-6 !py-3 !bg-[#3B5BDB] !text-white !rounded-[10px] !text-[13px] !font-semibold !border-none hover:!bg-[#3451D0] active:!bg-[#2E48BC]"
+                  />
                 )}
                 <span className="inline-flex h-[42px] w-[42px] items-center justify-center rounded-full bg-[#F8FAFC] text-[#3B5BDB]">
                   <ArrowRight size={18} />
