@@ -23,7 +23,7 @@ export function Topbar({ title, subtitle }: TopbarProps) {
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-[#EEF2FF] border border-[#C5D0FF]">
             <Wallet size={13} className="text-[#3B5BDB]" />
             <span className="text-[11px] font-medium text-[#374151]">
-              {address.slice(0, 6)}...{address.slice(-4)}
+              {address!.slice(0, 6)}...{address!.slice(-4)}
             </span>
             <button onClick={disconnect} className="text-[10px] text-[#6B7280] hover:text-[#B91C1C] ml-1">
               ✕

@@ -2,15 +2,15 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import type { FinixUserData } from '@/types/finix';
-import { generateMockData, createEmptyUserData, computeMonthlySummary, computeAllSummaries } from '@/lib/data-store';
+import { createEmptyUserData, computeMonthlySummary, computeAllSummaries } from '@/lib/data-store';
 import type { MonthlySummary } from '@/types/finix';
 
 interface FinixDataContextType {
   data: FinixUserData;
   isLoading: boolean;
   isConnected: boolean;
-  walletAddress: string;
-  connectWallet: (address: string) => void;
+  walletAddress: string | null;
+  connectWallet: (address: string) => Promise<void>;
   disconnectWallet: () => void;
   updateData: (newData: FinixUserData) => void;
   refreshData: () => void;
@@ -19,82 +19,141 @@ interface FinixDataContextType {
   currentMonth: string;
   saveToWalrus: () => Promise<void>;
   isSaving: boolean;
+  blobId: string | null;
 }
 
 const FinixDataContext = createContext<FinixDataContextType | null>(null);
 
+// Key for storing blobId reference in localStorage per wallet
+function blobIdKey(address: string): string {
+  return `finix_blobid_${address}`;
+}
+
 export function FinixDataProvider({ children }: { children: ReactNode }) {
-  const [mockData] = useState<FinixUserData>(() => generateMockData());
-  const [data, setData] = useState<FinixUserData>(mockData);
+  const [data, setData] = useState<FinixUserData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-  const [walletAddress, setWalletAddress] = useState('');
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [blobId, setBlobId] = useState<string | null>(null);
 
   const currentMonth = new Date().toISOString().slice(0, 7);
-  const currentSummary = computeMonthlySummary(data, currentMonth);
-  const allSummaries = computeAllSummaries(data);
+  const currentSummary = data ? computeMonthlySummary(data, currentMonth) : emptySummary();
+  const allSummaries = data ? computeAllSummaries(data) : [];
 
-  const connectWallet = useCallback((address: string) => {
+  const connectWallet = useCallback(async (address: string) => {
     setWalletAddress(address);
     setIsConnected(true);
     setIsLoading(true);
-    // In real app, fetch from Walrus here
-    setTimeout(() => {
-      const existing = localStorage.getItem(`finix_blob_${address}`);
-      if (existing) {
-        try {
-          const parsed = JSON.parse(existing);
-          setData(parsed);
-        } catch {
-          setData(createEmptyUserData(address));
+
+    try {
+      // Try to load existing data from Walrus
+      const savedBlobId = localStorage.getItem(blobIdKey(address));
+      if (savedBlobId) {
+        setBlobId(savedBlobId);
+        const res = await fetch(`/api/walrus?blobId=${encodeURIComponent(savedBlobId)}`);
+        const result = await res.json();
+        if (result.success && result.data) {
+          setData(result.data as FinixUserData);
+          setIsLoading(false);
+          return;
         }
-      } else {
-        setData(createEmptyUserData(address));
       }
+
+      // Fallback: check localStorage cache
+      const cached = localStorage.getItem(`finix_cache_${address}`);
+      if (cached) {
+        try {
+          setData(JSON.parse(cached));
+          setIsLoading(false);
+          return;
+        } catch { /* ignore */ }
+      }
+
+      // New user — create empty data
+      setData(createEmptyUserData(address));
+    } catch {
+      setData(createEmptyUserData(address));
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
   }, []);
 
   const disconnectWallet = useCallback(() => {
-    setWalletAddress('');
+    setWalletAddress(null);
     setIsConnected(false);
-    setData(mockData);
-  }, [mockData]);
+    setData(null);
+    setBlobId(null);
+  }, []);
 
   const updateData = useCallback((newData: FinixUserData) => {
     setData(newData);
-  }, []);
-
-  const refreshData = useCallback(() => {
-    // Re-read from localStorage
+    // Cache locally for quick reload
     if (walletAddress) {
-      const existing = localStorage.getItem(`finix_blob_${walletAddress}`);
-      if (existing) {
-        try {
-          setData(JSON.parse(existing));
-        } catch { /* ignore */ }
-      }
+      localStorage.setItem(`finix_cache_${walletAddress}`, JSON.stringify(newData));
+    }
+  }, [walletAddress]);
+
+  const refreshData = useCallback(async () => {
+    if (!walletAddress) return;
+    const savedBlobId = localStorage.getItem(blobIdKey(walletAddress));
+    if (savedBlobId) {
+      try {
+        const res = await fetch(`/api/walrus?blobId=${encodeURIComponent(savedBlobId)}`);
+        const result = await res.json();
+        if (result.success && result.data) {
+          setData(result.data as FinixUserData);
+        }
+      } catch { /* ignore */ }
     }
   }, [walletAddress]);
 
   const saveToWalrus = useCallback(async () => {
-    if (!walletAddress) return;
+    if (!data || !walletAddress) return;
     setIsSaving(true);
     try {
-      // In real app: sign + write to Walrus
-      await new Promise(r => setTimeout(r, 1500));
-      localStorage.setItem(`finix_blob_${walletAddress}`, JSON.stringify(data));
+      // Save to Walrus via API (server-side signing with Taotie/aggregator)
+      const res = await fetch('/api/walrus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data, walletAddress }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        const newBlobId = result.blobId;
+        setBlobId(newBlobId);
+        localStorage.setItem(blobIdKey(walletAddress), newBlobId);
+        // Update cached copy
+        localStorage.setItem(`finix_cache_${walletAddress}`, JSON.stringify(data));
+      } else {
+        throw new Error(result.error || 'Save failed');
+      }
+    } catch (err) {
+      console.error('Walrus save error:', err);
+      // Fallback: save to localStorage at least
+      localStorage.setItem(`finix_cache_${walletAddress}`, JSON.stringify(data));
+      throw err;
     } finally {
       setIsSaving(false);
     }
   }, [data, walletAddress]);
 
+  // Auto-save on data changes (debounced)
+  useEffect(() => {
+    if (!isConnected || !data || !walletAddress) return;
+    const timer = setTimeout(() => {
+      localStorage.setItem(`finix_cache_${walletAddress}`, JSON.stringify(data));
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [data, isConnected, walletAddress]);
+
   return (
     <FinixDataContext.Provider value={{
-      data, isLoading, isConnected, walletAddress,
+      data: data || createEmptyUserData(walletAddress || '0xunknown'),
+      isLoading, isConnected, walletAddress,
       connectWallet, disconnectWallet, updateData, refreshData,
-      currentSummary, allSummaries, currentMonth, saveToWalrus, isSaving,
+      currentSummary, allSummaries, currentMonth,
+      saveToWalrus, isSaving, blobId,
     }}>
       {children}
     </FinixDataContext.Provider>
@@ -105,4 +164,16 @@ export function useFinixData(): FinixDataContextType {
   const ctx = useContext(FinixDataContext);
   if (!ctx) throw new Error('useFinixData must be used within FinixDataProvider');
   return ctx;
+}
+
+function emptySummary(): MonthlySummary {
+  return {
+    month: new Date().toISOString().slice(0, 7),
+    totalIncome: 0,
+    totalExpense: 0,
+    netBalance: 0,
+    savingRate: 0,
+    byCategory: {},
+    bySource: {},
+  };
 }

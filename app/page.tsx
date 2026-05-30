@@ -1,22 +1,33 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useWallet } from "@/hooks/useWallet";
 import { useFinixData } from "@/hooks/useFinixData";
-import { ArrowRight, Shield, Wallet, Waves, Database, Loader2 } from "lucide-react";
+import { ArrowRight, Shield, Wallet, Waves, Database, Loader2, AlertTriangle } from "lucide-react";
 
 export default function Home() {
-  const { isConnected, connect, isConnecting, address } = useWallet();
+  const { isConnected, connect, isConnecting, isInstalled, address } = useWallet();
   const { connectWallet } = useFinixData();
+  const [connectError, setConnectError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     if (isConnected && address) {
-      connectWallet(address);
-      router.replace("/dashboard");
+      connectWallet(address).then(() => {
+        router.replace("/dashboard");
+      });
     }
   }, [isConnected, address, connectWallet, router]);
+
+  const handleConnect = async () => {
+    setConnectError(null);
+    try {
+      await connect();
+    } catch (err) {
+      setConnectError(err instanceof Error ? err.message : 'Failed to connect wallet');
+    }
+  };
 
   return (
     <main className="min-h-screen bg-[#EEF2FF] p-8">
@@ -43,7 +54,7 @@ export default function Home() {
 
               <div className="mt-8 flex items-center gap-3">
                 <button
-                  onClick={connect}
+                  onClick={handleConnect}
                   disabled={isConnecting}
                   className="inline-flex items-center gap-2 px-6 py-3 bg-[#3B5BDB] text-white rounded-[10px] text-[13px] font-semibold hover:bg-[#3451D0] active:bg-[#2E48BC] transition-all disabled:opacity-50"
                 >
@@ -58,6 +69,26 @@ export default function Home() {
                   <ArrowRight size={18} />
                 </span>
               </div>
+
+              {/* Error / no wallet installed */}
+              {connectError && (
+                <div className="mt-4 flex items-start gap-2 px-3 py-2.5 bg-[#FEF2F2] border border-[#FECACA] rounded-[10px]">
+                  <AlertTriangle size={14} className="text-[#B91C1C] shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[11px] font-medium text-[#B91C1C]">{connectError}</p>
+                    {!isInstalled && (
+                      <a
+                        href="https://chromewebstore.google.com/detail/sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] text-[#3B5BDB] underline mt-1 block"
+                      >
+                        Install Sui Wallet extension →
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="mt-auto">
@@ -120,9 +151,9 @@ export default function Home() {
                 </div>
                 <div className="rounded-[18px] bg-[#111827] p-5 text-white">
                   <p className="text-[11px] text-white/55">Walrus blob</p>
-                  <p className="mt-2 text-[15px] font-semibold">Ready to write</p>
+                  <p className="mt-2 text-[15px] font-semibold">Data on Walrus</p>
                   <p className="mt-4 text-[11px] leading-5 text-white/60">
-                    Each confirmed update creates a fresh decentralized data blob.
+                    Your financial data lives on Walrus — decentralized, permanent, and yours.
                   </p>
                 </div>
               </div>
