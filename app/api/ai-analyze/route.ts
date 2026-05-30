@@ -1,34 +1,133 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+interface FinancialData {
+  totalIncome: number;
+  totalExpense: number;
+  netBalance: number;
+  savingRate: number;
+  topCategory: string;
+  topCategoryAmount: number;
+  topSource: string;
+  topSourceAmount: number;
+  byCategory: Record<string, number>;
+  bySource: Record<string, number>;
+}
+
+interface GoalData {
+  name: string;
+  emoji: string;
+  targetAmount: number;
+  savedAmount: number;
+  progress: number;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { financialSummary } = body;
+    const { financialSummary, goals, trendData }: {
+      financialSummary: FinancialData;
+      goals: GoalData[];
+      trendData: { month: string; income: number; expense: number }[];
+    } = body;
 
-    // TODO: Replace with actual DeepSeek/Claude API call
-    // const response = await anthropic.messages.create({ ... });
-    
-    const mockAnalysis = `## 📊 Monthly Financial Analysis
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: 'DeepSeek API key not configured' }, { status: 500 });
+    }
 
-**Income:** $${financialSummary?.totalIncome || 0}
-**Expenses:** $${financialSummary?.totalExpense || 0}
-**Saving Rate:** ${financialSummary?.savingRate || 0}%
+    const prompt = buildAnalysisPrompt(financialSummary, goals, trendData);
 
-### Key Insights
-- Your saving rate of ${financialSummary?.savingRate || 0}% is ${(financialSummary?.savingRate || 0) >= 30 ? 'healthy' : 'below the 30% target'}
-- Largest expense category: ${financialSummary?.topCategory || 'N/A'}
-- ${financialSummary?.totalExpense < financialSummary?.totalIncome ? 'You are living within your means.' : 'You are spending more than you earn.'}
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {
+            role: 'system',
+            content: `Kamu adalah AI financial advisor dari Finix — aplikasi personal finance tracker berbasis Web3. 
+Tugasmu: menganalisis data keuangan user dan memberikan insight actionable yang jelas, praktis, dan to the point.
+Gunakan bahasa Indonesia kasual (lo/gue) — santai tapi tetap informatif. Respons maksimal 5 paragraf pendek.
+Fokus pada: pola pengeluaran, saving rate, goal progress, dan rekomendasi konkret.
+JANGAN pernah meminta informasi tambahan dari user. Kerjakan dari data yang ada.
+JANGAN menjawab pertanyaan apapun — kamu hanya memberikan analysis dari data.`,
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 800,
+      }),
+    });
 
-### Recommendations
-1. Try to save at least 30% of your income each month
-2. Review your largest spending categories for potential cuts
-3. Set up automatic savings for your active goals`;
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('DeepSeek API error:', response.status, errText);
+      return NextResponse.json({ error: 'AI service unavailable' }, { status: 502 });
+    }
 
-    return NextResponse.json({ analysis: mockAnalysis });
-  } catch {
+    const result = await response.json();
+    const analysis = result.choices?.[0]?.message?.content || 'Maaf, analysis gagal digenerate.';
+
+    return NextResponse.json({ analysis });
+  } catch (error) {
+    console.error('AI analysis error:', error);
     return NextResponse.json(
       { error: 'Failed to generate analysis' },
       { status: 500 }
     );
   }
+}
+
+function buildAnalysisPrompt(
+  summary: FinancialData,
+  goals: GoalData[],
+  trendData: { month: string; income: number; expense: number }[],
+): string {
+  const catLines = Object.entries(summary.byCategory || {})
+    .sort(([, a], [, b]) => b - a)
+    .map(([cat, amt]) => `  - ${cat}: $${amt.toFixed(2)}`)
+    .join('\n');
+
+  const srcLines = Object.entries(summary.bySource || {})
+    .sort(([, a], [, b]) => b - a)
+    .map(([src, amt]) => `  - ${src}: $${amt.toFixed(2)}`)
+    .join('\n');
+
+  const goalLines = (goals || [])
+    .map(g => `  - ${g.emoji} ${g.name}: $${g.savedAmount} / $${g.targetAmount} (${g.progress}%)`)
+    .join('\n');
+
+  const trendLines = (trendData || [])
+    .map(t => `  - ${t.month}: income=$${t.income.toFixed(0)}, expense=$${t.expense.toFixed(0)}`)
+    .join('\n');
+
+  return `Beri analysis keuangan berdasarkan data berikut:
+
+=== RINGKASAN BULAN INI ===
+- Total Income: $${summary.totalIncome?.toFixed(2) || '0'}
+- Total Expense: $${summary.totalExpense?.toFixed(2) || '0'}
+- Net Balance: $${summary.netBalance?.toFixed(2) || '0'}
+- Saving Rate: ${summary.savingRate || 0}%
+- Top Category: ${summary.topCategory || 'N/A'} ($${summary.topCategoryAmount?.toFixed(2) || '0'})
+- Top Source: ${summary.topSource || 'N/A'} ($${summary.topSourceAmount?.toFixed(2) || '0'})
+
+=== PENGELUARAN PER KATEGORI ===
+${catLines || '  (no data)'}
+
+=== PEMASUKAN PER SUMBER ===
+${srcLines || '  (no data)'}
+
+=== GOALS ===
+${goalLines || '  (no goals yet)'}
+
+=== TREND 6 BULAN ===
+${trendLines || '  (no trend data)'}
+
+Kasih insight dan rekomendasi actionable. Bahasa Indonesia kasual.`;
 }

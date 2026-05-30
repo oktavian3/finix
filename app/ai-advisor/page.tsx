@@ -1,22 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useFinixData } from "@/hooks/useFinixData";
 import { useWallet } from "@/hooks/useWallet";
 import { Button } from "@/components/ui/Button";
-import { Wallet, Bot, Send, Loader2 } from "lucide-react";
+import { Wallet, Bot, Sparkles, Loader2, TrendingUp, Target, PiggyBank, AlertTriangle } from "lucide-react";
+import { formatCurrency } from "@/lib/analytics";
 
 export default function AiAdvisorPage() {
-  const { currentSummary } = useFinixData();
+  const { data, currentSummary, allSummaries } = useFinixData();
   const { isConnected, connect, isConnecting, address } = useWallet();
-  const [message, setMessage] = useState('');
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [chatHistory, setChatHistory] = useState<Array<{role: string; content: string}>>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [analysisKey, setAnalysisKey] = useState(0);
+  const [regenerating, setRegenerating] = useState(false);
 
-  const generateAnalysis = async () => {
-    setIsLoading(true);
+  // Fresh analysis on mount
+  const generateAnalysis = useCallback(async (silent = false) => {
+    if (!silent) {
+      setIsLoading(true);
+      setError(null);
+    }
+
+    // Get top category by actual amount
+    const catEntries = Object.entries(currentSummary.byCategory).sort(([, a], [, b]) => b - a);
+    const srcEntries = Object.entries(currentSummary.bySource).sort(([, a], [, b]) => b - a);
+
+    const goalsData = data.goals.map(g => ({
+      name: g.name,
+      emoji: g.emoji,
+      targetAmount: g.targetAmount,
+      savedAmount: g.savedAmount,
+      progress: Math.round((g.savedAmount / g.targetAmount) * 100),
+    }));
+
+    const trendData = allSummaries.map(s => ({
+      month: s.month,
+      income: s.totalIncome,
+      expense: s.totalExpense,
+    }));
+
     try {
       const res = await fetch('/api/ai-analyze', {
         method: 'POST',
@@ -25,27 +50,41 @@ export default function AiAdvisorPage() {
           financialSummary: {
             totalIncome: currentSummary.totalIncome,
             totalExpense: currentSummary.totalExpense,
+            netBalance: currentSummary.netBalance,
             savingRate: currentSummary.savingRate,
-            topCategory: Object.entries(currentSummary.byCategory)
-              .sort(([, a], [, b]) => b - a)[0]?.[0] || 'N/A',
+            topCategory: catEntries[0]?.[0] || 'N/A',
+            topCategoryAmount: catEntries[0]?.[1] || 0,
+            topSource: srcEntries[0]?.[0] || 'N/A',
+            topSourceAmount: srcEntries[0]?.[1] || 0,
+            byCategory: currentSummary.byCategory,
+            bySource: currentSummary.bySource,
           },
+          goals: goalsData,
+          trendData,
         }),
       });
-      const data = await res.json();
-      setAnalysis(data.analysis);
-      setChatHistory(prev => [...prev, { role: 'assistant', content: data.analysis }]);
-    } catch {
-      setChatHistory(prev => [...prev, { role: 'assistant', content: 'Sorry, I had trouble generating the analysis. Please try again.' }]);
+      const dataJson = await res.json();
+      if (!res.ok) throw new Error(dataJson.error || 'Analysis failed');
+      setAnalysis(dataJson.analysis);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to generate analysis';
+      setError(msg);
+      if (!silent) setAnalysis(null);
     } finally {
       setIsLoading(false);
+      setRegenerating(false);
     }
-  };
+  }, [currentSummary, data.goals, allSummaries]);
 
-  const handleSend = () => {
-    if (!message.trim()) return;
-    setChatHistory(prev => [...prev, { role: 'user', content: message }]);
-    setChatHistory(prev => [...prev, { role: 'assistant', content: 'Great question! (AI integration coming soon — for now this is a placeholder response.) Consider reviewing your biggest expense categories and setting up automatic savings.' }]);
-    setMessage('');
+  useEffect(() => {
+    if (isConnected) {
+      generateAnalysis(true);
+    }
+  }, [isConnected, analysisKey]);
+
+  const handleRegenerate = () => {
+    setRegenerating(true);
+    setAnalysisKey(k => k + 1);
   };
 
   if (!isConnected) {
@@ -53,23 +92,25 @@ export default function AiAdvisorPage() {
       <AppShell title="AI Advisor">
         <div className="flex flex-col items-center justify-center py-24">
           <Bot size={48} className="text-[#C5D0FF] mb-4" />
-          <Button size="lg" onClick={connect} loading={isConnecting}><Wallet size={16} /> Connect Wallet</Button>
+          <h2 className="text-[18px] font-semibold text-[#111827] mb-2">Connect Wallet untuk Insight AI</h2>
+          <p className="text-[13px] text-[#6B7280] mb-6 text-center max-w-md">
+            Finix menganalisis data transaksi on-chain-mu dan ngasih rekomendasi finansial personal.
+          </p>
+          <Button size="lg" onClick={connect} loading={isConnecting}>
+            <Wallet size={16} /> Connect Wallet
+          </Button>
         </div>
       </AppShell>
     );
   }
 
-  const suggestionChips = [
-    'How can I improve my saving rate?',
-    'What\'s my biggest expense?',
-    'Am I on track for my goals?',
-    'Where should I cut spending?',
-  ];
+  const topCategory = Object.entries(currentSummary.byCategory).sort(([, a], [, b]) => b - a);
+  const topSource = Object.entries(currentSummary.bySource).sort(([, a], [, b]) => b - a);
 
   return (
     <AppShell
       title="AI Financial Advisor"
-      subtitle="Powered by Claude · Your data stays on Walrus"
+      subtitle="Powered by DeepSeek · Data stays private"
       topbarExtra={
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[10px] bg-[#EEF2FF] border border-[#C5D0FF]">
@@ -79,91 +120,155 @@ export default function AiAdvisorPage() {
         </div>
       }
     >
-      <div className="grid grid-cols-[1fr_280px] gap-5">
-        {/* Main Chat */}
-        <div className="bg-white border border-[#E2E8F0] rounded-[12px] flex flex-col min-h-[500px]">
-          {/* Welcome / Analysis */}
-          {chatHistory.length === 0 && !analysis && (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#3B5BDB] to-[#6D28D9] flex items-center justify-center mb-4">
-                <Bot size={28} className="text-white" />
-              </div>
-              <h3 className="text-[16px] font-semibold text-[#111827] mb-2">AI Financial Advisor</h3>
-              <p className="text-[12px] text-[#6B7280] max-w-[400px] mb-6">
-                Get personalized financial insights based on your Walrus-stored data.
-                All analysis happens server-side — your raw data stays private.
-              </p>
-              <Button onClick={generateAnalysis} loading={isLoading}>
-                <Bot size={14} /> Generate Monthly Analysis
-              </Button>
+      <div className="space-y-5">
+        {/* Data Summary Cards */}
+        <div className="grid grid-cols-4 gap-4">
+          <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp size={14} className="text-[#15803D]" />
+              <span className="text-[10px] font-semibold text-[#6B7280] uppercase tracking-wider">Income</span>
             </div>
-          )}
-
-          {/* Chat Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {chatHistory.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] rounded-[12px] p-3 ${
-                  msg.role === 'user'
-                    ? 'bg-[#3B5BDB] text-white'
-                    : 'bg-[#F8FAFC] border border-[#E2E8F0] text-[#374151]'
-                }`}>
-                  <p className="text-[12px] leading-5 whitespace-pre-wrap">{msg.content}</p>
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-[12px] p-3">
-                  <Loader2 size={16} className="animate-spin text-[#3B5BDB]" />
-                </div>
-              </div>
-            )}
+            <p className="text-[18px] font-bold text-[#111827]">{formatCurrency(currentSummary.totalIncome)}</p>
           </div>
+          <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle size={14} className="text-[#B91C1C]" />
+              <span className="text-[10px] font-semibold text-[#6B7280] uppercase tracking-wider">Expenses</span>
+            </div>
+            <p className="text-[18px] font-bold text-[#111827]">{formatCurrency(currentSummary.totalExpense)}</p>
+          </div>
+          <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <PiggyBank size={14} className="text-[#3B5BDB]" />
+              <span className="text-[10px] font-semibold text-[#6B7280] uppercase tracking-wider">Saving Rate</span>
+            </div>
+            <p className={`text-[18px] font-bold ${currentSummary.savingRate >= 30 ? 'text-[#15803D]' : 'text-[#B91C1C]'}`}>
+              {currentSummary.savingRate}%
+            </p>
+          </div>
+          <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Target size={14} className="text-[#6D28D9]" />
+              <span className="text-[10px] font-semibold text-[#6B7280] uppercase tracking-wider">Goals</span>
+            </div>
+            <p className="text-[18px] font-bold text-[#111827]">
+              {data.goals.filter(g => g.savedAmount >= g.targetAmount).length}/{data.goals.length}
+            </p>
+          </div>
+        </div>
 
-          {/* Input */}
-          <div className="border-t border-[#E2E8F0] p-3">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Ask anything about your finances..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                className="flex-1 px-3 py-2 text-[12px] border border-[#E2E8F0] rounded-[10px] focus:outline-none focus:border-[#3B5BDB]"
-              />
-              <Button size="sm" onClick={handleSend} disabled={!message.trim()}>
-                <Send size={13} />
-              </Button>
+        {/* Category & Source mini-table */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4">
+            <h4 className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider mb-3">Top Expenses</h4>
+            <div className="space-y-2">
+              {topCategory.slice(0, 4).map(([cat, amt]) => (
+                <div key={cat} className="flex items-center justify-between">
+                  <span className="text-[12px] text-[#374151] capitalize">{cat}</span>
+                  <span className="text-[12px] font-medium text-[#B91C1C]">{formatCurrency(amt)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4">
+            <h4 className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider mb-3">Top Income Sources</h4>
+            <div className="space-y-2">
+              {topSource.slice(0, 4).map(([src, amt]) => (
+                <div key={src} className="flex items-center justify-between">
+                  <span className="text-[12px] text-[#374151] capitalize">{src}</span>
+                  <span className="text-[12px] font-medium text-[#15803D]">{formatCurrency(amt)}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-3">
-          <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4">
-            <h4 className="text-[12px] font-semibold text-[#111827] mb-3">Quick Questions</h4>
-            <div className="space-y-2">
-              {suggestionChips.map((chip, i) => (
+        {/* AI Analysis */}
+        <div className="bg-white border border-[#E2E8F0] rounded-[12px] overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-[#E2E8F0] bg-[#FAFBFC]">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#3B5BDB] to-[#6D28D9] flex items-center justify-center">
+                <Bot size={14} className="text-white" />
+              </div>
+              <span className="text-[12px] font-semibold text-[#111827]">AI Analysis</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {analysis && (
                 <button
-                  key={i}
-                  onClick={() => {
-                    setMessage(chip);
-                    setChatHistory(prev => [...prev, { role: 'user', content: chip }]);
-                    setChatHistory(prev => [...prev, { role: 'assistant', content: 'Great question! This is a placeholder response. The full AI integration will analyze your Walrus-stored data and give personalized advice.' }]);
-                  }}
-                  className="w-full text-left px-3 py-2 text-[11px] text-[#374151] bg-[#F8FAFC] rounded-[8px] hover:bg-[#EEF2FF] transition-colors"
+                  onClick={handleRegenerate}
+                  disabled={regenerating}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium text-[#3B5BDB] hover:bg-[#EEF2FF] rounded-[8px] transition-colors disabled:opacity-50"
                 >
-                  {chip}
+                  <Sparkles size={13} />
+                  Regenerate
                 </button>
-              ))}
+              )}
+              <span className="text-[10px] text-[#9CA3AF]">DeepSeek</span>
             </div>
           </div>
+          <div className="p-5 min-h-[200px]">
+            {isLoading || regenerating ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 size={24} className="animate-spin text-[#3B5BDB] mb-3" />
+                <p className="text-[12px] text-[#6B7280]">Menganalisis data keuangan lo...</p>
+              </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <AlertTriangle size={24} className="text-[#B91C1C] mb-3" />
+                <p className="text-[12px] text-[#6B7280] mb-3">{error}</p>
+                <Button size="sm" onClick={() => generateAnalysis()}>
+                  <Sparkles size={13} /> Coba Lagi
+                </Button>
+              </div>
+            ) : analysis ? (
+              <div className="prose prose-sm max-w-none">
+                {analysis.split('\n').map((line, i) => {
+                  if (!line.trim()) return <br key={i} />;
+                  if (line.startsWith('###') || line.startsWith('##') || line.startsWith('#')) {
+                    return (
+                      <h3 key={i} className="text-[14px] font-semibold text-[#111827] mt-4 mb-2">
+                        {line.replace(/^#+\s*/, '')}
+                      </h3>
+                    );
+                  }
+                  if (line.startsWith('- ') || line.startsWith('* ')) {
+                    return (
+                      <li key={i} className="text-[12px] text-[#374151] leading-6 ml-4 list-disc">
+                        {line.replace(/^[-*]\s*/, '')}
+                      </li>
+                    );
+                  }
+                  if (/^\d+[\.\)]/.test(line)) {
+                    return (
+                      <li key={i} className="text-[12px] text-[#374151] leading-6 ml-4 list-decimal">
+                        {line.replace(/^\d+[\.\)]\s*/, '')}
+                      </li>
+                    );
+                  }
+                  return (
+                    <p key={i} className="text-[12px] text-[#374151] leading-6 mb-1">
+                      {line}
+                    </p>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Bot size={24} className="text-[#C5D0FF] mb-3" />
+                <p className="text-[12px] text-[#6B7280]">Generating analysis...</p>
+              </div>
+            )}
+          </div>
+        </div>
 
-          <div className="bg-gradient-to-br from-[#3B5BDB] to-[#6D28D9] rounded-[12px] p-4 text-white">
-            <Bot size={18} className="mb-2" />
+        {/* Bottom info */}
+        <div className="bg-gradient-to-br from-[#3B5BDB] to-[#6D28D9] rounded-[12px] p-4 text-white flex items-start gap-3">
+          <Bot size={18} className="shrink-0 mt-0.5" />
+          <div>
+            <p className="text-[12px] font-semibold mb-1">Privacy First 🔒</p>
             <p className="text-[11px] leading-5 opacity-90">
-              Your financial data never leaves Walrus. Only anonymized summaries are sent to the AI.
+              AI cuma nerima data agregat (ringkasan bulanan, kategori, goals) — transaksi raw lo tetap aman di Walrus. 
+              Nggak ada chat, nggak ada prompt injection. Pure data-driven insights.
             </p>
           </div>
         </div>
