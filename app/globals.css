@@ -1,3 +1,4 @@
+@import '@mysten/dapp-kit/dist/components/ConnectButton.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

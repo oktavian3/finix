@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useCallback, ReactNode } from 'react';
 import type { SuiSignAndExecuteTransactionOutput } from '@mysten/wallet-standard';
-import { SuiClientProvider, WalletProvider as DappKitWalletProvider, useCurrentAccount, useDisconnectWallet } from '@mysten/dapp-kit';
+import { SuiClientProvider, WalletProvider as DappKitWalletProvider, useCurrentAccount, useDisconnectWallet, useConnectWallet, useWallets } from '@mysten/dapp-kit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 interface WalletContextType {
@@ -20,13 +20,24 @@ const WalletContext = createContext<WalletContextType | null>(null);
 function WalletInner({ children }: { children: ReactNode }) {
   const currentAccount = useCurrentAccount();
   const { mutate: disconnectWallet } = useDisconnectWallet();
+  const { mutate: connectWallet, isPending } = useConnectWallet();
+  const wallets = useWallets();
 
   const address = currentAccount?.address ?? null;
   const isConnected = !!currentAccount;
 
   const connect = useCallback(() => {
-    throw new Error('Use ConnectButton component from @mysten/dapp-kit instead.');
-  }, []);
+    // Try to connect with the first available Sui wallet
+    const suiWallet = wallets.find(w => w.name === 'Sui Wallet' || w.name === 'Sui' || w.name === 'Suiet');
+    if (suiWallet) {
+      connectWallet({ wallet: suiWallet });
+    } else if (wallets.length > 0) {
+      connectWallet({ wallet: wallets[0] });
+    } else {
+      // Fallback: open Sui Wallet download page
+      window.open('https://suiwallet.com', '_blank');
+    }
+  }, [wallets, connectWallet]);
 
   const disconnect = useCallback(() => {
     disconnectWallet();

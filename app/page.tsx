@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useWallet } from "@/hooks/useWallet";
 import { useFinixData } from "@/hooks/useFinixData";
-import { ConnectButton } from "@mysten/dapp-kit";
 import { ArrowRight, Shield, Wallet, Waves, Database, Loader2 } from "lucide-react";
 
 export default function Home() {
@@ -53,10 +52,13 @@ export default function Home() {
                     Loading...
                   </button>
                 ) : (
-                  <ConnectButton
-                    connectText={<span className="flex items-center gap-2"><Wallet size={16} /> Connect Wallet</span>}
-                    className="!inline-flex !items-center !gap-2 !px-6 !py-3 !bg-[#3B5BDB] !text-white !rounded-[10px] !text-[13px] !font-semibold !border-none hover:!bg-[#3451D0] active:!bg-[#2E48BC]"
-                  />
+                  <button
+                    onClick={() => connect()}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#3B5BDB] text-white rounded-[10px] text-[13px] font-semibold hover:bg-[#3451D0] active:bg-[#2E48BC] transition-colors duration-150 cursor-pointer z-10 relative"
+                  >
+                    <Wallet size={16} />
+                    Connect Wallet
+                  </button>
                 )}
                 <span className="inline-flex h-[42px] w-[42px] items-center justify-center rounded-full bg-[#F8FAFC] text-[#3B5BDB]">
                   <ArrowRight size={18} />
