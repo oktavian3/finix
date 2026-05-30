@@ -14,12 +14,11 @@ import { useWallet } from "@/hooks/useWallet";
 import { formatCurrency, getMonthLabel } from "@/lib/analytics";
 import { Button } from "@/components/ui/Button";
 import { Plus, Wallet, Flame } from "lucide-react";
-import { ConnectButton } from "@mysten/dapp-kit";
 import Link from "next/link";
 
 export default function DashboardPage() {
   const { data, currentSummary, allSummaries, currentMonth } = useFinixData();
-  const { isConnected, address } = useWallet();
+  const { isConnected, connect, isConnecting, address } = useWallet();
   const [expandedMetric, setExpandedMetric] = useState<string | null>(null);
 
   // Get current month name
@@ -32,7 +31,7 @@ export default function DashboardPage() {
           <Wallet size={48} className="text-[#C5D0FF] mb-4" />
           <h2 className="text-[18px] font-semibold text-[#111827] mb-2">Connect your Sui wallet</h2>
           <p className="text-[13px] text-[#6B7280] mb-6">Connect your wallet to track your finances on-chain</p>
-          <ConnectButton connectText={<span className="flex items-center gap-2"><Wallet size={16} /> Connect Wallet</span>} />
+          <Button size="lg" onClick={connect} loading={isConnecting}><Wallet size={16} /> Connect Wallet</Button>
         </div>
       </AppShell>
     );

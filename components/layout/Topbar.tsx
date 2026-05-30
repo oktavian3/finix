@@ -1,7 +1,7 @@
 "use client";
 
 import { useWallet } from '@/hooks/useWallet';
-import { ConnectButton } from '@mysten/dapp-kit';
+import { Button } from '@/components/ui/Button';
 import { Wallet } from 'lucide-react';
 
 interface TopbarProps {
@@ -10,7 +10,7 @@ interface TopbarProps {
 }
 
 export function Topbar({ title, subtitle }: TopbarProps) {
-  const { address, isConnected, disconnect } = useWallet();
+  const { address, isConnected, connect, isConnecting, disconnect } = useWallet();
 
   return (
     <div className="sticky top-0 z-30 bg-white border-b border-[#E2E8F0] px-[26px] py-3 flex items-center justify-between">
@@ -30,10 +30,9 @@ export function Topbar({ title, subtitle }: TopbarProps) {
             </button>
           </div>
         ) : (
-          <ConnectButton
-            connectText={<span className="flex items-center gap-1.5"><Wallet size={13} /> Connect Wallet</span>}
-            className="!inline-flex !items-center !gap-1.5 !px-3 !py-1.5 !bg-[#3B5BDB] !text-white !rounded-[10px] !text-[11px] !font-semibold !border-none hover:!bg-[#3451D0]"
-          />
+          <Button size="sm" onClick={connect} loading={isConnecting}>
+            <Wallet size={13} /> Connect
+          </Button>
         )}
       </div>
     </div>

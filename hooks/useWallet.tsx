@@ -1,90 +1,124 @@
 "use client";
 
-import { createContext, useContext, useCallback, ReactNode } from 'react';
-import type { SuiSignAndExecuteTransactionOutput } from '@mysten/wallet-standard';
-import { SuiClientProvider, WalletProvider as DappKitWalletProvider, useCurrentAccount, useDisconnectWallet, useConnectWallet, useWallets } from '@mysten/dapp-kit';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 
 interface WalletContextType {
   isConnected: boolean;
   address: string | null;
   isConnecting: boolean;
   isInstalled: boolean;
-  connect: () => void;
+  connect: () => Promise<void>;
   disconnect: () => void;
-  signAndExecuteTransaction: (tx: Uint8Array) => Promise<SuiSignAndExecuteTransactionOutput>;
 }
 
 const WalletContext = createContext<WalletContextType | null>(null);
 
-function WalletInner({ children }: { children: ReactNode }) {
-  const currentAccount = useCurrentAccount();
-  const { mutate: disconnectWallet } = useDisconnectWallet();
-  const { mutate: connectWallet, isPending } = useConnectWallet();
-  const wallets = useWallets();
+// Sui Wallet Standard — detects wallet extension and requests connection
+interface SuiWalletAccount {
+  address: string;
+  chains: string[];
+  features: string[];
+}
 
-  const address = currentAccount?.address ?? null;
-  const isConnected = !!currentAccount;
+interface SuiWallet {
+  name: string;
+  icon: string;
+  accounts: readonly SuiWalletAccount[];
+  features: Record<string, unknown>;
+}
 
-  const connect = useCallback(() => {
-    // Try to connect with the first available Sui wallet
-    const suiWallet = wallets.find(w => w.name === 'Sui Wallet' || w.name === 'Sui' || w.name === 'Suiet');
-    if (suiWallet) {
-      connectWallet({ wallet: suiWallet });
-    } else if (wallets.length > 0) {
-      connectWallet({ wallet: wallets[0] });
-    } else {
-      // Fallback: open Sui Wallet download page
-      window.open('https://suiwallet.com', '_blank');
+function getSuiWallet(): SuiWallet | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const w = (window as any).suiWallet;
+    if (w) {
+      return {
+        name: w.name || 'Sui Wallet',
+        icon: w.icon || '',
+        accounts: w.accounts || [],
+        features: w.features || {},
+      };
     }
-  }, [wallets, connectWallet]);
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function isWalletInstalled(): boolean {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return !!(window as any).suiWallet;
+  } catch {
+    return false;
+  }
+}
+
+async function requestConnection(): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const w = (window as any).suiWallet;
+  if (!w) throw new Error('Sui Wallet not installed');
+
+  // Sui Wallet Standard: call connect() on the wallet's features
+  // The standard feature is 'standard:connect'
+  const connectFeature = w.features?.['standard:connect'];
+  if (connectFeature) {
+    // Some wallets expose connect as a function
+    if (typeof connectFeature === 'function') {
+      await connectFeature();
+    } else if (typeof connectFeature.connect === 'function') {
+      await connectFeature.connect();
+    }
+  }
+
+  // After connection request, wait a short tick then read accounts
+  await new Promise(r => setTimeout(r, 500));
+
+  const updated = getSuiWallet();
+  const account = updated?.accounts?.[0];
+  if (!account?.address) {
+    throw new Error('User rejected connection or no accounts found');
+  }
+  return account.address;
+}
+
+export function WalletProvider({ children }: { children: ReactNode }) {
+  const [isConnected, setIsConnected] = useState(false);
+  const [address, setAddress] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    setIsInstalled(isWalletInstalled());
+  }, []);
+
+  const connect = useCallback(async () => {
+    setIsConnecting(true);
+    try {
+      if (!isWalletInstalled()) {
+        throw new Error('Sui Wallet not detected. Install Sui Wallet browser extension.');
+      }
+
+      const addr = await requestConnection();
+      setAddress(addr);
+      setIsConnected(true);
+    } catch (err) {
+      console.error('Wallet connection failed:', err);
+      throw err;
+    } finally {
+      setIsConnecting(false);
+    }
+  }, []);
 
   const disconnect = useCallback(() => {
-    disconnectWallet();
-  }, [disconnectWallet]);
-
-  const signAndExecuteTransaction = useCallback(async (
-    _tx: Uint8Array,
-  ): Promise<SuiSignAndExecuteTransactionOutput> => {
-    throw new Error('Use Transaction builders from @mysten/sui/transactions.');
+    setAddress(null);
+    setIsConnected(false);
   }, []);
 
   return (
-    <WalletContext.Provider value={{
-      isConnected, address, isConnecting: false, isInstalled: true,
-      connect, disconnect, signAndExecuteTransaction,
-    }}>
+    <WalletContext.Provider value={{ isConnected, address, isConnecting, isInstalled, connect, disconnect }}>
       {children}
     </WalletContext.Provider>
-  );
-}
-
-const queryClient = new QueryClient();
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const networkConfig: any = {
-  mainnet: {
-    url: process.env.NEXT_PUBLIC_TATUM_RPC_URL || 'https://sui-mainnet.gateway.tatum.io',
-  },
-  testnet: {
-    url: 'https://fullnode.testnet.sui.io:443',
-  },
-};
-
-export function WalletProvider({ children }: { children: ReactNode }) {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <SuiClientProvider
-        networks={networkConfig}
-        defaultNetwork={(process.env.NEXT_PUBLIC_SUI_NETWORK || 'mainnet') as 'mainnet' | 'testnet'}
-      >
-        <DappKitWalletProvider autoConnect>
-          <WalletInner>
-            {children}
-          </WalletInner>
-        </DappKitWalletProvider>
-      </SuiClientProvider>
-    </QueryClientProvider>
   );
 }
 

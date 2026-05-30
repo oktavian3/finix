@@ -7,7 +7,7 @@ import { useFinixData } from "@/hooks/useFinixData";
 import { ArrowRight, Shield, Wallet, Waves, Database, Loader2 } from "lucide-react";
 
 export default function Home() {
-  const { isConnected, isConnecting, address } = useWallet();
+  const { isConnected, connect, isConnecting, address } = useWallet();
   const { connectWallet, isLoading } = useFinixData();
   const router = useRouter();
 

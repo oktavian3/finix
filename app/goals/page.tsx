@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { showToast } from "@/components/ui/Toast";
 import { Wallet, Plus, Target, Trash2 } from "lucide-react";
-import { ConnectButton } from "@mysten/dapp-kit";
 import type { Goal } from "@/types/finix";
 
 const emojiSuggestions: Record<string, string> = {
@@ -31,7 +30,7 @@ function suggestEmoji(name: string): string {
 
 export default function GoalsPage() {
   const { data, updateData, currentSummary } = useFinixData();
-  const { isConnected, address } = useWallet();
+  const { isConnected, connect, isConnecting, address } = useWallet();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState('');
   const [target, setTarget] = useState('');
@@ -74,7 +73,7 @@ export default function GoalsPage() {
       <AppShell title="Goals">
         <div className="flex flex-col items-center justify-center py-24">
           <Wallet size={48} className="text-[#C5D0FF] mb-4" />
-          <ConnectButton connectText={<span className="flex items-center gap-2"><Wallet size={16} /> Connect Wallet</span>} />
+          <Button size="lg" onClick={connect} loading={isConnecting}><Wallet size={16} /> Connect Wallet</Button>
         </div>
       </AppShell>
     );
