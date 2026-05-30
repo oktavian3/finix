@@ -8,6 +8,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { formatCurrency } from '@/lib/analytics';
 import { Button } from "@/components/ui/Button";
 import { Wallet, Plus, Search, Trash2, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { ConnectButton } from "@mysten/dapp-kit";
 import { showToast } from "@/components/ui/Toast";
 import type { Transaction } from "@/types/finix";
 
@@ -19,7 +20,7 @@ const categoryEmojis: Record<string, string> = {
 
 export default function TransactionsPage() {
   const { data, updateData, currentMonth } = useFinixData();
-  const { isConnected, connect, isConnecting, address } = useWallet();
+  const { isConnected, address } = useWallet();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
@@ -71,9 +72,7 @@ export default function TransactionsPage() {
           <Wallet size={48} className="text-[#C5D0FF] mb-4" />
           <h2 className="text-[18px] font-semibold text-[#111827] mb-2">Connect your wallet</h2>
           <p className="text-[13px] text-[#6B7280] mb-6">Connect to view and manage transactions</p>
-          <Button size="lg" onClick={connect} loading={isConnecting}>
-            <Wallet size={16} /> Connect Wallet
-          </Button>
+          <ConnectButton connectText={<span className="flex items-center gap-2"><Wallet size={16} /> Connect Wallet</span>} />
         </div>
       </AppShell>
     );

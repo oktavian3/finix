@@ -1,33 +1,24 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useWallet } from "@/hooks/useWallet";
 import { useFinixData } from "@/hooks/useFinixData";
-import { ArrowRight, Shield, Wallet, Waves, Database, Loader2, AlertTriangle } from "lucide-react";
+import { ConnectButton } from "@mysten/dapp-kit";
+import { ArrowRight, Shield, Wallet, Waves, Database, Loader2 } from "lucide-react";
 
 export default function Home() {
-  const { isConnected, connect, isConnecting, isInstalled, address } = useWallet();
-  const { connectWallet } = useFinixData();
-  const [connectError, setConnectError] = useState<string | null>(null);
+  const { isConnected, isConnecting, address } = useWallet();
+  const { connectWallet, isLoading } = useFinixData();
   const router = useRouter();
 
   useEffect(() => {
-    if (isConnected && address) {
+    if (isConnected && address && !isLoading) {
       connectWallet(address).then(() => {
         router.replace("/dashboard");
       });
     }
-  }, [isConnected, address, connectWallet, router]);
-
-  const handleConnect = async () => {
-    setConnectError(null);
-    try {
-      await connect();
-    } catch (err) {
-      setConnectError(err instanceof Error ? err.message : 'Failed to connect wallet');
-    }
-  };
+  }, [isConnected, address, isLoading, connectWallet, router]);
 
   return (
     <main className="min-h-screen bg-[#EEF2FF] p-8">
@@ -53,42 +44,23 @@ export default function Home() {
               </p>
 
               <div className="mt-8 flex items-center gap-3">
-                <button
-                  onClick={handleConnect}
-                  disabled={isConnecting}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-[#3B5BDB] text-white rounded-[10px] text-[13px] font-semibold hover:bg-[#3451D0] active:bg-[#2E48BC] transition-all disabled:opacity-50"
-                >
-                  {isConnecting ? (
+                {isLoading || isConnecting ? (
+                  <button
+                    disabled
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#3B5BDB] text-white rounded-[10px] text-[13px] font-semibold opacity-50"
+                  >
                     <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <Wallet size={16} />
-                  )}
-                  {isConnecting ? 'Connecting...' : 'Connect Wallet'}
-                </button>
+                    Loading...
+                  </button>
+                ) : (
+                  <div className="[&_button]:!inline-flex [&_button]:!items-center [&_button]:!gap-2 [&_button]:!px-6 [&_button]:!py-3 [&_button]:!bg-[#3B5BDB] [&_button]:!text-white [&_button]:!rounded-[10px] [&_button]:!text-[13px] [&_button]:!font-semibold [&_button]:!border-none [&_button]:!shadow-none">
+                    <ConnectButton connectText={<span className="flex items-center gap-2"><Wallet size={16} /> Connect Wallet</span>} />
+                  </div>
+                )}
                 <span className="inline-flex h-[42px] w-[42px] items-center justify-center rounded-full bg-[#F8FAFC] text-[#3B5BDB]">
                   <ArrowRight size={18} />
                 </span>
               </div>
-
-              {/* Error / no wallet installed */}
-              {connectError && (
-                <div className="mt-4 flex items-start gap-2 px-3 py-2.5 bg-[#FEF2F2] border border-[#FECACA] rounded-[10px]">
-                  <AlertTriangle size={14} className="text-[#B91C1C] shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-[11px] font-medium text-[#B91C1C]">{connectError}</p>
-                    {!isInstalled && (
-                      <a
-                        href="https://chromewebstore.google.com/detail/sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[11px] text-[#3B5BDB] underline mt-1 block"
-                      >
-                        Install Sui Wallet extension →
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
 
             <div className="mt-auto">

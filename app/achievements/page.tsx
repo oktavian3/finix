@@ -3,7 +3,7 @@
 import { AppShell } from "@/components/layout/AppShell";
 import { useFinixData } from "@/hooks/useFinixData";
 import { useWallet } from "@/hooks/useWallet";
-import { Button } from "@/components/ui/Button";
+import { ConnectButton } from "@mysten/dapp-kit";
 import { Wallet, Rocket, Flame, Medal, Target, Trophy, Gem, Shield, Banknote } from "lucide-react";
 
 const badges = [
@@ -19,7 +19,7 @@ const badges = [
 
 export default function AchievementsPage() {
   const { data } = useFinixData();
-  const { isConnected, connect, isConnecting, address } = useWallet();
+  const { isConnected, address } = useWallet();
 
   const earnedCount = Object.values(data.achievements).filter(Boolean).length;
   const totalBadges = badges.length;
@@ -29,7 +29,7 @@ export default function AchievementsPage() {
       <AppShell title="Achievements">
         <div className="flex flex-col items-center justify-center py-24">
           <Wallet size={48} className="text-[#C5D0FF] mb-4" />
-          <Button size="lg" onClick={connect} loading={isConnecting}><Wallet size={16} /> Connect Wallet</Button>
+          <ConnectButton connectText={<span className="flex items-center gap-2"><Wallet size={16} /> Connect Wallet</span>} />
         </div>
       </AppShell>
     );

@@ -5,12 +5,13 @@ import { AppShell } from "@/components/layout/AppShell";
 import { useFinixData } from "@/hooks/useFinixData";
 import { useWallet } from "@/hooks/useWallet";
 import { Button } from "@/components/ui/Button";
-import { Wallet, Bot, Sparkles, Loader2, TrendingUp, Target, PiggyBank, AlertTriangle } from "lucide-react";
+import { Bot, Sparkles, Loader2, TrendingUp, Target, PiggyBank, AlertTriangle, Wallet } from "lucide-react";
+import { ConnectButton } from "@mysten/dapp-kit";
 import { formatCurrency } from "@/lib/analytics";
 
 export default function AiAdvisorPage() {
   const { data, currentSummary, allSummaries } = useFinixData();
-  const { isConnected, connect, isConnecting, address } = useWallet();
+  const { isConnected, address } = useWallet();
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,9 +97,7 @@ export default function AiAdvisorPage() {
           <p className="text-[13px] text-[#6B7280] mb-6 text-center max-w-md">
             Finix menganalisis data transaksi on-chain-mu dan ngasih rekomendasi finansial personal.
           </p>
-          <Button size="lg" onClick={connect} loading={isConnecting}>
-            <Wallet size={16} /> Connect Wallet
-          </Button>
+          <ConnectButton connectText={<span className="flex items-center gap-2"><Wallet size={16} /> Connect Wallet</span>} />
         </div>
       </AppShell>
     );

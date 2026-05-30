@@ -5,13 +5,13 @@ import { AppShell } from "@/components/layout/AppShell";
 import { useFinixData } from "@/hooks/useFinixData";
 import { useWallet } from "@/hooks/useWallet";
 import { formatCurrency, getMonthLabel } from "@/lib/analytics";
-import { Button } from "@/components/ui/Button";
 import { Wallet } from "lucide-react";
+import { ConnectButton } from "@mysten/dapp-kit";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, CartesianGrid, Tooltip, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 
 export default function AnalyticsPage() {
   const { allSummaries, currentSummary } = useFinixData();
-  const { isConnected, connect, isConnecting, address } = useWallet();
+  const { isConnected, address } = useWallet();
   const [period, setPeriod] = useState<'1m' | '3m' | '6m'>('6m');
 
   const periodData = useMemo(() => {
@@ -53,7 +53,7 @@ export default function AnalyticsPage() {
         <div className="flex flex-col items-center justify-center py-24">
           <Wallet size={48} className="text-[#C5D0FF] mb-4" />
           <h2 className="text-[18px] font-semibold text-[#111827] mb-2">Connect wallet to view analytics</h2>
-          <Button size="lg" onClick={connect} loading={isConnecting}><Wallet size={16} /> Connect Wallet</Button>
+          <ConnectButton connectText={<span className="flex items-center gap-2"><Wallet size={16} /> Connect Wallet</span>} />
         </div>
       </AppShell>
     );

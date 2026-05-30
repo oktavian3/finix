@@ -9,10 +9,11 @@ import { Button } from "@/components/ui/Button";
 import { showToast } from "@/components/ui/Toast";
 import { Modal } from "@/components/ui/Modal";
 import { Wallet, Copy, Download, AlertTriangle, Database, ExternalLink } from "lucide-react";
+import { ConnectButton } from "@mysten/dapp-kit";
 
 export default function ProfilePage() {
   const { data, updateData } = useFinixData();
-  const { isConnected, connect, isConnecting, address } = useWallet();
+  const { isConnected, address } = useWallet();
   const [displayName, setDisplayName] = useState(data.profile.displayName);
   const [savingTarget, setSavingTarget] = useState(data.profile.monthlyTargetSavingRate);
   const [showDanger, setShowDanger] = useState(false);
@@ -49,7 +50,7 @@ export default function ProfilePage() {
       <AppShell title="Profile">
         <div className="flex flex-col items-center justify-center py-24">
           <Wallet size={48} className="text-[#C5D0FF] mb-4" />
-          <Button size="lg" onClick={connect} loading={isConnecting}><Wallet size={16} /> Connect Wallet</Button>
+          <ConnectButton connectText={<span className="flex items-center gap-2"><Wallet size={16} /> Connect Wallet</span>} />
         </div>
       </AppShell>
     );
