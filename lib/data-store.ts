@@ -29,7 +29,7 @@ export function createEmptyUserData(walletAddress: string): FinixUserData {
     streaks: {
       currentStreak: 0,
       longestStreak: 0,
-      lastActiveDate: new Date().toISOString().split('T')[0],
+      lastActiveDate: '',
     },
     lastUpdated: new Date().toISOString(),
   };

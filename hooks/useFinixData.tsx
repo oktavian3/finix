@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
 import type { FinixUserData } from '@/types/finix';
-import { createEmptyUserData, computeMonthlySummary, computeAllSummaries } from '@/lib/data-store';
+import { createEmptyUserData, computeMonthlySummary, computeAllSummaries, checkAchievements } from '@/lib/data-store';
 import type { MonthlySummary } from '@/types/finix';
 import { useCurrentAccount } from '@mysten/dapp-kit';
 
@@ -130,10 +130,15 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateData = useCallback((newData: FinixUserData) => {
-    setData(newData);
+    // Always re-check achievements on any data update
+    const withAchievements = {
+      ...newData,
+      achievements: checkAchievements(newData),
+    };
+    setData(withAchievements);
     // Cache locally for quick reload
     if (walletAddress) {
-      localStorage.setItem(`finix_cache_${walletAddress}`, JSON.stringify(newData));
+      localStorage.setItem(`finix_cache_${walletAddress}`, JSON.stringify(withAchievements));
     }
   }, [walletAddress]);
 
