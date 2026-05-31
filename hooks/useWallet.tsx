@@ -62,6 +62,18 @@ interface WalletContextType {
 
 const WalletContext = createContext<WalletContextType | null>(null);
 
+function isSuiWallet(w: any): boolean {
+  if (!w) return false;
+  // Primary: check chains for sui: prefix
+  if (w.chains?.some((c: string) => c.startsWith('sui:'))) return true;
+  // Secondary: check for Sui-specific features (works even when wallet is locked)
+  const suiFeatures = ['standard:connect', 'sui:signAndExecuteTransaction', 'sui:signPersonalMessage'];
+  if (w.features && suiFeatures.some((f) => w.features[f])) return true;
+  // Tertiary: check if name looks like a Sui wallet
+  if (w.name && typeof w.name === 'string' && /sui|slush/i.test(w.name)) return true;
+  return false;
+}
+
 function detectWallets(): SuiWallet[] {
   const wallets: SuiWallet[] = [];
 
@@ -70,26 +82,30 @@ function detectWallets(): SuiWallet[] {
     const walletStdNS = (navigator as any).wallets;
     const rawWallets: any[] = [];
 
+    // wallet-standard API: get() may be sync or return an iterator — handle both
     if (walletStdNS && typeof walletStdNS.get === 'function') {
-      rawWallets.push(...walletStdNS.get());
+      const result = walletStdNS.get();
+      if (Array.isArray(result)) {
+        rawWallets.push(...result);
+      } else if (result && typeof result[Symbol.iterator] === 'function') {
+        rawWallets.push(...Array.from(result));
+      }
     }
 
-    // Also check wallet-standard API from @mysten/wallet-standard
-    // Some wallets inject via window event
-    rawWallets.forEach((w: any) => {
-      if (
-        w &&
-        w.chains?.some((c: string) => c.startsWith('sui:'))
-      ) {
-        wallets.push({
-          name: w.name || 'Unknown',
-          icon: w.icon || '',
-          version: w.version || '1',
-          accounts: w.accounts || [],
-          chains: w.chains || [],
-          features: w.features || {},
-        });
-      }
+    // Also check for wallet-standard WalletsMap / getWithKinds API (legacy)
+    if (walletStdNS?._wallets) {
+      rawWallets.push(...Array.from(walletStdNS._wallets.values()));
+    }
+
+    rawWallets.filter(isSuiWallet).forEach((w: any) => {
+      wallets.push({
+        name: w.name || 'Unknown',
+        icon: w.icon || '',
+        version: w.version || '1',
+        accounts: w.accounts || [],
+        chains: w.chains || [],
+        features: w.features || {},
+      });
     });
   } catch { /* ignore */ }
 
@@ -99,6 +115,17 @@ function detectWallets(): SuiWallet[] {
     if (legacy && !wallets.find(w => w.name === legacy.name)) {
       wallets.push(legacy);
     }
+  } catch { /* ignore */ }
+
+  // Fallback: scan window for any injected wallet objects (some wallets use non-standard names)
+  try {
+    const knownSuiNames = ['suiWallet', 'slushWallet', 'suiet', 'martianwallet'];
+    knownSuiNames.forEach((key) => {
+      const maybeWallet = (window as any)[key] as SuiWallet | undefined;
+      if (maybeWallet && maybeWallet.accounts && !wallets.find(w => w.name === maybeWallet.name)) {
+        wallets.push(maybeWallet);
+      }
+    });
   } catch { /* ignore */ }
 
   return wallets;
@@ -162,6 +189,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           setAddress(detail.accounts[0].address);
           setIsConnected(true);
         }
+      }
+      // Also re-detect wallets — the event may contain wallets that were injected late
+      const wallets = detectWallets();
+      if (wallets.length > 0) {
+        const found = wallets.find(w => w.name.toLowerCase().includes('slush')) || wallets[0];
+        setWallet(found);
+        setWalletName(found.name);
+        setIsInstalled(true);
       }
     };
 
