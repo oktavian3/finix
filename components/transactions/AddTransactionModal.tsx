@@ -7,6 +7,7 @@ import { showToast } from '@/components/ui/Toast';
 import { useFinixData } from '@/hooks/useFinixData';
 import { updateStreak } from '@/lib/data-store';
 import { Utensils, Car, ShoppingBag, Zap, Film, Heart, BookOpen, MoreHorizontal, Briefcase, Code, TrendingUp, Plane, Repeat, ArrowUpRight, DollarSign, ShoppingCart, CreditCard, CheckCircle2, ExternalLink } from 'lucide-react';
+import { walrusStore } from '@/lib/walrus-client';
 import type { Transaction, ExpenseCategory, IncomeSource } from '@/types/finix';
 
 interface AddTransactionModalProps {
@@ -37,7 +38,7 @@ const incomeSources: Array<{ key: IncomeSource; label: string; icon: LucideIcon 
 ];
 
 export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProps) {
-  const { data, updateData, walletAddress } = useFinixData();
+  const { data, updateData } = useFinixData();
   const [step, setStep] = useState(1);
   const [type, setType] = useState<'expense' | 'income' | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -85,18 +86,8 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
     updateData(updatedWithStreak);
 
     try {
-      const res = await fetch('/api/walrus', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: updatedWithStreak, walletAddress }),
-      });
-      if (!res.ok) throw new Error(`Walrus API returned ${res.status}`);
-      const result = await res.json();
-      if (result.success && result.blobId) {
-        setSuccessBlobId(result.objectId || result.blobId);
-      } else {
-        throw new Error('Invalid Walrus response');
-      }
+      const { blobId, objectId } = await walrusStore(updatedWithStreak);
+      setSuccessBlobId(objectId || blobId);
       showToast('success', 'Transaction saved to Walrus');
     } catch (err) {
       console.error('Walrus storage failed:', err);
