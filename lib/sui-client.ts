@@ -1,4 +1,4 @@
-const TATUM_RPC_URL: string = process.env.NEXT_PUBLIC_TATUM_RPC_URL || 'https://sui-mainnet.gateway.tatum.io';
+const TATUM_RPC_URL: string = process.env.NEXT_PUBLIC_TATUM_RPC_URL || 'https://sui-testnet.gateway.tatum.io';
 const TATUM_API_KEY: string = process.env.NEXT_PUBLIC_TATUM_API_KEY || '';
 
 // CoreClient is marked abstract in .d.mts but concrete at runtime

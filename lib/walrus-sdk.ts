@@ -16,7 +16,6 @@ import { WalrusClient } from '@mysten/walrus';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
 
-const TATUM_TESTNET_RPC = 'https://sui-testnet.gateway.tatum.io';
 const DEFAULT_TESTNET_RPC = 'https://fullnode.testnet.sui.io:443';
 
 interface WalrusStoreResult {
@@ -35,11 +34,9 @@ function getKeypair(): Ed25519Keypair {
 
 function getClient(): WalrusClient {
   if (!_client) {
-    // Use Tatum testnet RPC if API key is configured, else default
-    const apiKey = process.env.NEXT_PUBLIC_TATUM_API_KEY;
-    const rpcUrl = apiKey
-      ? `${TATUM_TESTNET_RPC}?apiKey=${apiKey}`
-      : DEFAULT_TESTNET_RPC;
+    // WalrusClient needs raw Sui RPC (no custom headers)
+    // Tatum RPC is used for frontend wallet connections via config.ts
+    const rpcUrl = DEFAULT_TESTNET_RPC;
 
     _client = new WalrusClient({
       network: 'testnet',
