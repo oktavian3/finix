@@ -1,10 +1,10 @@
 /**
  * Walrus SDK — server-side blob storage using WalrusClient + Ed25519Keypair.
+ * Uses Tatum Sui RPC. WASM is loaded by @mysten/walrus internally.
  *
- * Used by the API route to store user data on Walrus mainnet.
- * The private key is stored as SUI_PRIVATE_KEY env var (suiprivkey format).
+ * The signer (private key) pays for storage in WAL tokens.
+ * Vercel env: SUI_PRIVATE_KEY (suiprivkey format)
  */
-
 import { WalrusClient } from '@mysten/walrus';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
@@ -27,23 +27,15 @@ function getKeypair(): Ed25519Keypair {
 function getClient(): WalrusClient {
   if (!_client) {
     const url = process.env.SUI_RPC_URL || MAINNET_RPC;
-    // In Vercel serverless, __dirname is unreliable for WASM.
-    // Copy wasm to public/ and load via URL or rely on @mysten/walrus-wasm package default.
     _client = new WalrusClient({
       network: 'mainnet',
-      suiClient: new SuiJsonRpcClient({ url, network: 'mainnet' }),
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+      suiClient: new SuiJsonRpcClient({ url, network: 'mainnet' } as any),
     });
   }
   return _client;
 }
 
-/**
- * Store JSON data on Walrus mainnet using WalrusClient + Ed25519Keypair.
- * The signer (private key) pays for storage (~0.006 SUI per blob).
- *
- * @returns {blobId, objectId} — blobId is the content-addressed Walrus ID,
- *   objectId is the Sui object ID of the certified blob.
- */
 export async function storeBlob(data: unknown): Promise<WalrusStoreResult> {
   const client = getClient();
   const signer = getKeypair();
@@ -54,7 +46,7 @@ export async function storeBlob(data: unknown): Promise<WalrusStoreResult> {
   const result = await client.writeBlob({
     blob: bytes,
     signer,
-    epochs: 52, // ~1 year
+    epochs: 52,
     deletable: false,
   });
 
