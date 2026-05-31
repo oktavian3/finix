@@ -18,8 +18,8 @@ export function AppShell({ title, subtitle, children, topbarExtra }: AppShellPro
       <div className="ml-[210px]">
         <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-[#E2E8F0] px-[26px] py-3 flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-semibold text-[#111827]">{title}</h1>
-            {subtitle && <p className="text-xs text-[#6B7280] mt-0.5">{subtitle}</p>}
+            <h1 className="text-xl font-semibold text-[#111827]">{title}</h1>
+            {subtitle && <p className="text-sm text-[#6B7280] mt-0.5">{subtitle}</p>}
           </div>
           <div className="flex items-center gap-3">
             {topbarExtra}

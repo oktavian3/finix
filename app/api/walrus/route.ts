@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { storeBlob } from '@/lib/walrus-sdk';
+import { storeBlob, getBlob } from '@/lib/walrus-sdk';
 
 /** Store data on Walrus testnet via WalrusClient server-side signing */
 export async function POST(request: NextRequest) {
@@ -25,6 +25,25 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[Walrus API] error:', error);
     const msg = error instanceof Error ? error.message : 'Failed to save to Walrus';
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+/** Read blob data from Walrus aggregator */
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const blobId = searchParams.get('blobId');
+
+    if (!blobId) {
+      return NextResponse.json({ error: 'blobId query param is required' }, { status: 400 });
+    }
+
+    const data = await getBlob(blobId);
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    console.error('[Walrus API GET] error:', error);
+    const msg = error instanceof Error ? error.message : 'Failed to read blob';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

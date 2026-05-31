@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, ArrowLeftRight, BarChart3, Target, 
-  Award, Bot, User, Waves, Database
+  Award, Bot, User, LogOut, Waves, Database
 } from 'lucide-react';
+import { useWallet } from '@/hooks/useWallet';
 
 const navItems = [
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -19,6 +20,7 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { isConnected, disconnect } = useWallet();
 
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-[210px] bg-[#FFFFFF] border-r border-[#E2E8F0] flex flex-col z-40">
@@ -40,7 +42,7 @@ export function Sidebar() {
               key={item.path}
               href={item.path}
               className={`
-                flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-xs font-medium transition-all duration-200 mb-0.5
+                flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm font-medium transition-all duration-200 mb-0.5
                 ${isActive 
                   ? 'text-[#3B5BDB] bg-[#EEF2FF] shadow-sm' 
                   : 'text-[#374151] hover:text-[#111827] hover:bg-[#F5F7FF] hover:shadow-sm'
@@ -48,7 +50,7 @@ export function Sidebar() {
               `}
               style={isActive ? { borderLeft: '3px solid #3B5BDB', paddingLeft: '9px' } : { paddingLeft: '12px' }}
             >
-              <Icon size={15} strokeWidth={1.8} className={`transition-transform duration-200 ${isActive ? 'text-[#3B5BDB]' : ''}`} />
+              <Icon size={16} strokeWidth={1.8} className={`transition-transform duration-200 ${isActive ? 'text-[#3B5BDB]' : ''}`} />
               <span>{item.label}</span>
             </Link>
           );
@@ -56,22 +58,39 @@ export function Sidebar() {
       </nav>
 
       {/* Powered by */}
-      <div className="px-5 pb-6">
-        <p className="text-2xs font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] mb-3">Powered by</p>
-        <div className="flex flex-col gap-2">
+      <div className="px-5 pb-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] mb-2">Powered by</p>
+        <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2 px-3 py-2 rounded-[10px] bg-[#F8FAFC] border border-[#E2E8F0] transition-all duration-200 hover:bg-[#EEF2FF] hover:border-[#C5D0FF] hover-lift cursor-default">
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#3B5BDB] text-white">
               <Waves size={11} />
             </span>
-            <span className="text-xs font-semibold text-[#111827]">Sui Network</span>
+            <span className="text-sm font-semibold text-[#111827]">Sui Network</span>
           </div>
           <div className="flex items-center gap-2 px-3 py-2 rounded-[10px] bg-[#F8FAFC] border border-[#E2E8F0] transition-all duration-200 hover:bg-[#EEF2FF] hover:border-[#C5D0FF] hover-lift cursor-default">
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#111827] text-white">
               <Database size={11} />
             </span>
-            <span className="text-xs font-semibold text-[#111827]">Walrus</span>
+            <span className="text-sm font-semibold text-[#111827]">Walrus</span>
           </div>
         </div>
+
+        {/* Disconnect button */}
+        {isConnected && (
+          <button
+            onClick={() => {
+              disconnect();
+              // Clear local data cache on disconnect
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem('finix_blob_mock');
+              }
+            }}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm font-medium text-[#B91C1C] hover:bg-[#FEF2F2] w-full mt-3 transition-all duration-200"
+          >
+            <LogOut size={16} strokeWidth={1.8} />
+            <span>Disconnect Wallet</span>
+          </button>
+        )}
       </div>
     </aside>
   );

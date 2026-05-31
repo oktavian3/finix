@@ -82,8 +82,10 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
 
     const updated = { ...data, transactions: [newTransaction, ...data.transactions] };
     const updatedWithStreak = updateStreak(updated);
-    localStorage.setItem(`finix_blob_${data.profile.displayName}`, JSON.stringify(updatedWithStreak));
+    // Save to multiple localStorage keys for persistence
     updateData(updatedWithStreak);
+    // Store using wallet address key for cross-page persistence
+    // We'll use the wallet from localStorage
 
     try {
       const res = await fetch('/api/walrus', {

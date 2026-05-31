@@ -107,9 +107,9 @@ function buildAnalysisPrompt(
     .map(t => `  - ${t.month}: income=$${t.income.toFixed(0)}, expense=$${t.expense.toFixed(0)}`)
     .join('\n');
 
-  return `Beri analysis keuangan berdasarkan data berikut:
+  return `Provide a financial analysis in English based on this data:
 
-=== RINGKASAN BULAN INI ===
+=== CURRENT MONTH SUMMARY ===
 - Total Income: $${summary.totalIncome?.toFixed(2) || '0'}
 - Total Expense: $${summary.totalExpense?.toFixed(2) || '0'}
 - Net Balance: $${summary.netBalance?.toFixed(2) || '0'}
@@ -117,17 +117,17 @@ function buildAnalysisPrompt(
 - Top Category: ${summary.topCategory || 'N/A'} ($${summary.topCategoryAmount?.toFixed(2) || '0'})
 - Top Source: ${summary.topSource || 'N/A'} ($${summary.topSourceAmount?.toFixed(2) || '0'})
 
-=== PENGELUARAN PER KATEGORI ===
+=== EXPENSES BY CATEGORY ===
 ${catLines || '  (no data)'}
 
-=== PEMASUKAN PER SUMBER ===
+=== INCOME BY SOURCE ===
 ${srcLines || '  (no data)'}
 
 === GOALS ===
 ${goalLines || '  (no goals yet)'}
 
-=== TREND 6 BULAN ===
+=== 6-MONTH TREND ===
 ${trendLines || '  (no trend data)'}
 
-Kasih insight dan rekomendasi actionable. Bahasa Indonesia kasual.`;
+Provide actionable insights and recommendations in English. Keep it concise and direct. Format with short paragraphs and bullet points where appropriate.`;
 }

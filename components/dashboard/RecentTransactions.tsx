@@ -29,10 +29,10 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
           >
             <span className="text-md transition-transform duration-200 group-hover:scale-110">{categoryIcons[t.category || t.source || 'other']}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-[#111827] truncate group-hover:text-[#3B5BDB] transition-colors duration-200">{t.description || (t.type === 'income' ? 'Income' : 'Expense')}</p>
-              <p className="text-2xs text-[#9CA3AF]">{t.date}</p>
+              <p className="text-sm font-medium text-[#111827] truncate group-hover:text-[#3B5BDB] transition-colors duration-200">{t.description || (t.type === 'income' ? 'Income' : 'Expense')}</p>
+              <p className="text-xs text-[#9CA3AF]">{t.date}</p>
             </div>
-            <div className={`flex items-center gap-1 text-xs font-semibold ${t.type === 'income' ? 'text-[#15803D]' : 'text-[#B91C1C]'}`}>
+            <div className={`flex items-center gap-1 text-sm font-semibold ${t.type === 'income' ? 'text-[#15803D]' : 'text-[#B91C1C]'}`}>
               {t.type === 'income' ? <ArrowUpRight size={12} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /> : <ArrowDownRight size={12} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:translate-y-0.5" />}
               {formatCurrency(t.amount)}
             </div>
