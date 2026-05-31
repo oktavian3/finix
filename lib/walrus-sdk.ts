@@ -29,8 +29,7 @@ function getClient(): WalrusClient {
     const url = process.env.SUI_RPC_URL || MAINNET_RPC;
     _client = new WalrusClient({
       network: 'mainnet',
-      suiClient: new SuiJsonRpcClient({ url, network: 'mainnet' }),
-      wasmUrl: __dirname + '/walrus_wasm_bg.wasm',
+      suiClient: new SuiJsonRpcClient({ url }),
     });
   }
   return _client;
