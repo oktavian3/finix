@@ -8,11 +8,11 @@
 
 const WALRUS_PUBLISHER =
   process.env.NEXT_PUBLIC_WALRUS_PUBLISHER_URL ||
-  'https://publisher.walrus-testnet.walrus.space';
+  'https://publisher.walrus.space';
 
 const WALRUS_AGGREGATOR =
   process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR_URL ||
-  'https://aggregator.walrus-testnet.walrus.space';
+  'https://aggregator.walrus.space';
 
 interface WalrusStoreResult {
   blobId: string;
