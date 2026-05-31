@@ -11,7 +11,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'data is required' }, { status: 400 });
     }
 
+    console.log('[Walrus API] storeBlob called with data:', JSON.stringify(data).slice(0, 200));
     const result = await storeBlob(data);
+    console.log('[Walrus API] success:', result.blobId, result.objectId);
 
     return NextResponse.json({
       success: true,
@@ -20,7 +22,7 @@ export async function POST(request: NextRequest) {
       message: 'Data saved to Walrus mainnet',
     });
   } catch (error) {
-    console.error('Walrus store error:', error);
+    console.error('[Walrus API] error:', error);
     const msg = error instanceof Error ? error.message : 'Failed to save to Walrus';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
