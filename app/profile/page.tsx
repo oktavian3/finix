@@ -28,14 +28,23 @@ export default function ProfilePage() {
   };
 
   const handleExportData = () => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    // Build CSV rows: Date;Type;Category/Source;Description;Amount
+    const cols = ['Date', 'Type', 'Category/Source', 'Description', 'Amount'];
+    const rows = data.transactions.map((tx) => {
+      const catOrSrc = tx.type === 'income' ? (tx.source || 'other') : (tx.category || 'other');
+      const desc = (tx.description || '').replace(/"/g, '""');
+      const amount = tx.type === 'income' ? tx.amount : -tx.amount;
+      return [tx.date, tx.type, catOrSrc, `"${desc}"`, amount.toFixed(2)].join(';');
+    });
+    const csv = '\uFEFF' + cols.join(';') + '\n' + rows.join('\n') + '\n';
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `finix-data-${address?.slice(0, 8) || 'export'}.json`;
+    a.download = `finix-transactions-${address?.slice(0, 8) || 'export'}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('success', 'Data exported');
+    showToast('success', 'Transactions exported as CSV');
   };
 
   const handleClearData = () => {
@@ -169,7 +178,13 @@ export default function ProfilePage() {
               <Button variant="secondary" size="sm" onClick={handleExportData}>
                 <Download size={13} /> Export Data
               </Button>
-              <Button variant="secondary" size="sm" onClick={() => window.open('https://suiscan.xyz/mainnet/object/' + (blobId || ''), '_blank')}>
+              <Button variant="secondary" size="sm" onClick={() => {
+                if (!blobId) {
+                  showToast('error', 'No blob saved yet — save your data first before exploring');
+                  return;
+                }
+                window.open('https://suiscan.xyz/mainnet/object/' + blobId, '_blank');
+              }}>
                 <ExternalLink size={13} /> View on Explorer
               </Button>
             </div>

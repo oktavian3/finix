@@ -108,7 +108,7 @@ export default function AiAdvisorPage() {
   return (
     <AppShell
       title="AI Financial Advisor"
-      subtitle="Powered by DeepSeek · Data stays private"
+      subtitle="AI-powered financial analysis based on your spending habits"
       topbarExtra={
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[10px] bg-[#EEF2FF] border border-[#C5D0FF]">
@@ -263,10 +263,10 @@ export default function AiAdvisorPage() {
         <div className="bg-gradient-to-br from-[#3B5BDB] to-[#6D28D9] rounded-[12px] p-4 text-white flex items-start gap-3">
           <Bot size={18} className="shrink-0 mt-0.5" />
           <div>
-            <p className="text-xs font-semibold mb-1">Privacy First 🔒</p>
+            <p className="text-xs font-semibold mb-1">How Your Data Is Used 🧠</p>
             <p className="text-xs leading-5 opacity-90">
-              AI cuma nerima data agregat (ringkasan bulanan, kategori, goals) — transaksi raw lo tetap aman di Walrus. 
-              Nggak ada chat, nggak ada prompt injection. Pure data-driven insights.
+              We analyze your financial habits to give you personalized insights — your raw transactions stay private on Walrus.
+              Only aggregated data (monthly summaries, categories, goals) is used for AI analysis.
             </p>
           </div>
         </div>
