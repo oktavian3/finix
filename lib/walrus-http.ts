@@ -17,15 +17,15 @@ interface WalrusStoreResult {
 }
 
 /**
- * Store JSON data on Walrus via HTTP Publisher.
- * Skips mainnet if network param is 'testnet' — faster and avoids DNS issues.
+ * Store JSON data on Walrus via HTTP Publisher (client-side).
+ * Tries mainnet first (3s timeout, fast), falls back to testnet (15s).
  * Pure fetch — no WASM, no signing needed.
  * The publisher pays for storage, not the user.
  * Storage: ~1 year (epochs=52).
  */
 export async function walrusStoreHTTP(
   data: unknown,
-  preferred: 'mainnet' | 'testnet' = 'testnet'
+  preferred: 'mainnet' | 'testnet' = 'mainnet'
 ): Promise<WalrusStoreResult> {
   const blob = typeof data === 'string' ? data : JSON.stringify(data);
   const bytes = new TextEncoder().encode(blob);
@@ -36,7 +36,7 @@ export async function walrusStoreHTTP(
   for (const network of order as ('mainnet' | 'testnet')[]) {
     const publisher = PUBLISHERS[network];
     const url = `${publisher}/v1/blobs?epochs=52`;
-    const timeoutMs = network === 'mainnet' ? 8000 : 15000;
+    const timeoutMs = network === 'mainnet' ? 3000 : 15000;
 
     console.log(`[walrusStore] trying ${network} via ${url}...`);
     try {
