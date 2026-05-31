@@ -14,7 +14,7 @@ const badges = [
   { id: 'firstGoal', name: 'First Goal', icon: Target, desc: 'Created first goal', hint: 'Create a savings goal' },
   { id: 'goalCompleted', name: 'Goal Crusher', icon: Trophy, desc: 'Completed a goal', hint: 'Complete a savings goal' },
   { id: 'savingRate50', name: 'Super Saver', icon: Gem, desc: '50%+ saving rate for 1 month', hint: 'Save at least 50% of income' },
-  { id: 'antiBoros', name: 'Anti Boros', icon: Shield, desc: 'Expenses < 30% of income', hint: 'Keep expenses under 30%' },
+  { id: 'antiBoros', name: 'Thrifty', icon: Shield, desc: 'Expenses < 30% of income', hint: 'Keep expenses under 30%' },
 ];
 
 export default function AchievementsPage() {
