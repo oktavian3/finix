@@ -7,7 +7,6 @@ import { showToast } from '@/components/ui/Toast';
 import { useFinixData } from '@/hooks/useFinixData';
 import { updateStreak } from '@/lib/data-store';
 import { Utensils, Car, ShoppingBag, Zap, Film, Heart, BookOpen, MoreHorizontal, Briefcase, Code, TrendingUp, Plane, Repeat, ArrowUpRight, DollarSign, ShoppingCart, CreditCard, CheckCircle2, ExternalLink } from 'lucide-react';
-import { walrusStore } from '@/lib/walrus-client';
 import type { Transaction, ExpenseCategory, IncomeSource } from '@/types/finix';
 
 interface AddTransactionModalProps {
@@ -86,9 +85,19 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
     updateData(updatedWithStreak);
 
     try {
-      const { blobId, objectId } = await walrusStore(updatedWithStreak);
-      setSuccessBlobId(objectId || blobId);
-      showToast('success', 'Transaction saved to Walrus');
+      const res = await fetch('/api/walrus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: updatedWithStreak }),
+      });
+      if (!res.ok) throw new Error(`Walrus API returned ${res.status}`);
+      const result = await res.json();
+      if (result.success && result.blobId) {
+        setSuccessBlobId(result.objectId || result.blobId);
+      } else {
+        throw new Error(result.error || 'Invalid Walrus response');
+      }
+      showToast('success', 'Transaction saved to Walrus on Sui Mainnet');
     } catch (err) {
       console.error('Walrus storage failed:', err);
       showToast('error', 'Failed to save to Walrus', 'Data saved locally only');
@@ -250,11 +259,7 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
                 Close
               </Button>
               <Button
-                onClick={() => {
-                  const network = process.env.NEXT_PUBLIC_WALRUS_NETWORK || 'mainnet';
-                  const base = network === 'testnet' ? 'testnet' : 'mainnet';
-                  window.open(`https://suiscan.xyz/${base}/object/${successBlobId}`, '_blank', 'noopener,noreferrer');
-                }}
+                onClick={() => window.open(`https://suiscan.xyz/mainnet/object/${successBlobId}`, '_blank', 'noopener,noreferrer')}
                 className="flex-1"
               >
                 <ExternalLink size={14} />
