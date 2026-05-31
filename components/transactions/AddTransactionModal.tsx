@@ -104,8 +104,7 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
       // Server API failed — try client-side HTTP Publisher as fallback
       console.warn('Server Walrus API failed, trying client-side HTTP Publisher...');
       const { walrusStoreHTTP } = await import('@/lib/walrus-http');
-      // Skip mainnet — publisher.walrus.space DNS broken from most locations
-      const httpResult = await walrusStoreHTTP(updatedWithStreak, 'testnet');
+      const httpResult = await walrusStoreHTTP(updatedWithStreak);
       if (httpResult.blobId) {
         setSuccessBlobId(httpResult.objectId || httpResult.blobId);
         setSuccessNetwork(httpResult.network);
