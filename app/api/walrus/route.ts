@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { storeBlob } from '@/lib/walrus-sdk';
 
-/** Store data on Walrus mainnet via WalrusClient server-side signing */
+/** Store data on Walrus testnet via WalrusClient server-side signing */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -19,7 +19,8 @@ export async function POST(request: NextRequest) {
       success: true,
       blobId: result.blobId,
       objectId: result.objectId,
-      message: 'Data saved to Walrus mainnet',
+      network: result.network,
+      message: 'Data saved to Walrus on Sui Testnet',
     });
   } catch (error) {
     console.error('[Walrus API] error:', error);

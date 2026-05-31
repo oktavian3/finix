@@ -95,8 +95,9 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
         const result = await res.json();
         if (result.success && result.blobId) {
           setSuccessBlobId(result.objectId || result.blobId);
-          setSuccessNetwork('mainnet');
-          showToast('success', 'Transaction saved to Walrus on Sui Mainnet');
+          setSuccessNetwork(result.network || 'testnet');
+          const label = result.network === 'mainnet' ? 'Sui Mainnet' : 'Sui Testnet';
+          showToast('success', `Transaction saved to Walrus on ${label}`);
           setIsSaving(false);
           return;
         }
