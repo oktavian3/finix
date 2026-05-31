@@ -16,7 +16,8 @@ import { WalrusClient } from '@mysten/walrus';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
 
-const TESTNET_RPC = 'https://fullnode.testnet.sui.io:443';
+const TATUM_TESTNET_RPC = 'https://sui-testnet.gateway.tatum.io';
+const DEFAULT_TESTNET_RPC = 'https://fullnode.testnet.sui.io:443';
 
 interface WalrusStoreResult {
   blobId: string;
@@ -34,10 +35,16 @@ function getKeypair(): Ed25519Keypair {
 
 function getClient(): WalrusClient {
   if (!_client) {
+    // Use Tatum testnet RPC if API key is configured, else default
+    const apiKey = process.env.NEXT_PUBLIC_TATUM_API_KEY;
+    const rpcUrl = apiKey
+      ? `${TATUM_TESTNET_RPC}?apiKey=${apiKey}`
+      : DEFAULT_TESTNET_RPC;
+
     _client = new WalrusClient({
       network: 'testnet',
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      suiClient: new SuiJsonRpcClient({ url: TESTNET_RPC, network: 'testnet' } as any),
+      suiClient: new SuiJsonRpcClient({ url: rpcUrl, network: 'testnet' } as any),
     });
   }
   return _client;
