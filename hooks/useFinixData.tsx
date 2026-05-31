@@ -1,9 +1,10 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
 import type { FinixUserData } from '@/types/finix';
 import { createEmptyUserData, computeMonthlySummary, computeAllSummaries } from '@/lib/data-store';
 import type { MonthlySummary } from '@/types/finix';
+import { useCurrentAccount } from '@mysten/dapp-kit';
 
 interface FinixDataContextType {
   data: FinixUserData;
@@ -36,53 +37,64 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [blobId, setBlobId] = useState<string | null>(null);
+  const currentAccount = useCurrentAccount();
+  const initialized = useRef(false);
 
   const currentMonth = new Date().toISOString().slice(0, 7);
   const currentSummary = data ? computeMonthlySummary(data, currentMonth) : emptySummary();
   const allSummaries = data ? computeAllSummaries(data) : [];
 
-  const connectWallet = useCallback(async (address: string) => {
-    setWalletAddress(address);
+  // Auto-detect wallet from dapp-kit context
+  useEffect(() => {
+    if (!currentAccount?.address) return;
+    if (initialized.current && walletAddress === currentAccount.address) return;
+
+    initialized.current = true;
+    const addr = currentAccount.address;
+    setWalletAddress(addr);
     setIsConnected(true);
     setIsLoading(true);
 
-    try {
-      // Priority 1: local cache (fastest, most reliable)
-      const cached = localStorage.getItem(`finix_cache_${address}`);
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached) as FinixUserData;
-          if (parsed && parsed.transactions) {
-            setData(parsed);
+    const loadData = async () => {
+      try {
+        // Priority 1: local cache
+        const cached = localStorage.getItem(`finix_cache_${addr}`);
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached) as FinixUserData;
+            if (parsed && parsed.transactions) {
+              setData(parsed);
+              setIsLoading(false);
+              return;
+            }
+          } catch { /* ignore */ }
+        }
+
+        // Priority 2: Walrus blob
+        const savedBlobId = localStorage.getItem(blobIdKey(addr));
+        if (savedBlobId) {
+          setBlobId(savedBlobId);
+          const res = await fetch(`/api/walrus?blobId=${encodeURIComponent(savedBlobId)}`);
+          const result = await res.json();
+          if (result.success && result.data) {
+            setData(result.data as FinixUserData);
+            localStorage.setItem(`finix_cache_${addr}`, JSON.stringify(result.data));
             setIsLoading(false);
             return;
           }
-        } catch { /* ignore bad cache */ }
-      }
-
-      // Priority 2: Walrus blob
-      const savedBlobId = localStorage.getItem(blobIdKey(address));
-      if (savedBlobId) {
-        setBlobId(savedBlobId);
-        const res = await fetch(`/api/walrus?blobId=${encodeURIComponent(savedBlobId)}`);
-        const result = await res.json();
-        if (result.success && result.data) {
-          setData(result.data as FinixUserData);
-          // Also cache locally
-          localStorage.setItem(`finix_cache_${address}`, JSON.stringify(result.data));
-          setIsLoading(false);
-          return;
         }
-      }
 
-      // New user — create empty data
-      setData(createEmptyUserData(address));
-    } catch {
-      setData(createEmptyUserData(address));
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+        // New user
+        setData(createEmptyUserData(addr));
+      } catch {
+        setData(createEmptyUserData(addr));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [currentAccount?.address]);
 
   // Check streak expiry: if lastActiveDate > 24 hours ago, reset streak
   useEffect(() => {
@@ -110,6 +122,7 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
   }, [walletAddress]); // runs on wallet connect
 
   const disconnectWallet = useCallback(() => {
+    initialized.current = false;
     setWalletAddress(null);
     setIsConnected(false);
     setData(null);
@@ -181,7 +194,13 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
     <FinixDataContext.Provider value={{
       data: data || createEmptyUserData(walletAddress || '0xunknown'),
       isLoading, isConnected, walletAddress,
-      connectWallet, disconnectWallet, updateData, refreshData,
+      connectWallet: async (addr: string) => {
+        // Backward compat — just re-trigger the auto-detect by clearing and waiting
+        initialized.current = false;
+        setWalletAddress(null);
+        setIsConnected(false);
+        // The useEffect on currentAccount will re-fire
+      }, disconnectWallet, updateData, refreshData,
       currentSummary, allSummaries, currentMonth,
       saveToWalrus, isSaving, blobId,
     }}>
