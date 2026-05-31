@@ -18,23 +18,30 @@ interface WalrusStoreResult {
 
 /**
  * Store JSON data on Walrus via HTTP Publisher.
- * Tries mainnet first (10s timeout), falls back to testnet.
+ * Skips mainnet if network param is 'testnet' — faster and avoids DNS issues.
  * Pure fetch — no WASM, no signing needed.
  * The publisher pays for storage, not the user.
  * Storage: ~1 year (epochs=52).
  */
-export async function walrusStoreHTTP(data: unknown): Promise<WalrusStoreResult> {
+export async function walrusStoreHTTP(
+  data: unknown,
+  preferred: 'mainnet' | 'testnet' = 'testnet'
+): Promise<WalrusStoreResult> {
   const blob = typeof data === 'string' ? data : JSON.stringify(data);
   const bytes = new TextEncoder().encode(blob);
 
-  // Try mainnet first
-  for (const network of ['mainnet', 'testnet'] as const) {
+  // Order: preferred first, then the other
+  const order = preferred === 'mainnet' ? ['mainnet', 'testnet'] : ['testnet', 'mainnet'];
+
+  for (const network of order as ('mainnet' | 'testnet')[]) {
     const publisher = PUBLISHERS[network];
     const url = `${publisher}/v1/blobs?epochs=52`;
+    const timeoutMs = network === 'mainnet' ? 8000 : 15000;
 
+    console.log(`[walrusStore] trying ${network} via ${url}...`);
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), network === 'mainnet' ? 10000 : 15000);
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
 
       const res = await fetch(url, {
         method: 'PUT',
@@ -42,27 +49,39 @@ export async function walrusStoreHTTP(data: unknown): Promise<WalrusStoreResult>
         signal: controller.signal,
       });
 
-      clearTimeout(timeout);
+      clearTimeout(timer);
+      console.log(`[walrusStore] ${network} response:`, res.status);
 
       if (!res.ok) {
-        console.warn(`[walrusStore] ${network} HTTP ${res.status}, trying next...`);
+        const text = await res.text().catch(() => '');
+        console.warn(`[walrusStore] ${network} HTTP ${res.status}:`, text.slice(0, 200));
         continue;
       }
 
       const result = await res.json();
-      return {
-        blobId: result.blobId || null,
-        objectId: result.blobObject?.id || null,
-        newCreated: result.newCreated || false,
-        network,
-      };
+      const blobId = result.newlyCreated?.blobObject?.blobId
+        || result.alreadyCertified?.blobId
+        || result.blobId
+        || null;
+
+      const objectId = result.newlyCreated?.blobObject?.id
+        || result.alreadyCertified?.blobObject?.id
+        || result.blobObject?.id
+        || null;
+
+      if (blobId) {
+        return { blobId, objectId, newCreated: !!result.newlyCreated, network };
+      }
+
+      console.warn(`[walrusStore] ${network} no blobId in response:`, JSON.stringify(result).slice(0, 300));
+      continue;
     } catch (err) {
-      console.warn(`[walrusStore] ${network} failed:`, err);
+      console.warn(`[walrusStore] ${network} error:`, err);
       continue;
     }
   }
 
-  throw new Error('Both mainnet and testnet Walrus publishers are unreachable');
+  throw new Error(`Both mainnet and testnet Walrus publishers are unreachable`);
 }
 
 /**
