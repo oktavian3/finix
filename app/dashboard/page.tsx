@@ -54,8 +54,8 @@ export default function DashboardPage() {
       topbarExtra={
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FFF7ED] border border-[#FED7AA]">
-            <Flame size={12} className="text-[#C2410C]" />
-            <span className="text-xs font-semibold text-[#C2410C]">{data.streaks.currentStreak} day streak</span>
+            <Flame size={14} className="text-[#C2410C]" />
+            <span className="text-sm font-semibold text-[#C2410C]">{data.streaks.currentStreak} day streak</span>
           </div>
           <Link href="/transactions">
             <Button size="sm">
@@ -64,8 +64,8 @@ export default function DashboardPage() {
             </Button>
           </Link>
           <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[10px] bg-[#EEF2FF] border border-[#C5D0FF]">
-            <Wallet size={12} className="text-[#3B5BDB]" />
-            <span className="text-xs font-medium text-[#374151]">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
+            <Wallet size={14} className="text-[#3B5BDB]" />
+            <span className="text-sm font-medium text-[#374151]">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
           </div>
         </div>
       }

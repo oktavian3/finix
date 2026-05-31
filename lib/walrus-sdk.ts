@@ -18,6 +18,8 @@ import { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
 
 const DEFAULT_TESTNET_RPC = 'https://fullnode.testnet.sui.io:443';
 
+const AGGREGATOR_URL = 'https://aggregator.walrus-testnet.walrus.space';
+
 interface WalrusStoreResult {
   blobId: string;
   objectId: string | null;
@@ -70,4 +72,23 @@ export async function storeBlob(data: unknown): Promise<WalrusStoreResult> {
     objectId: result.blobObject?.id ?? null,
     network: 'testnet',
   };
+}
+
+/** Read blob data from Walrus aggregator */
+export async function getBlob(blobId: string): Promise<unknown> {
+  const url = `${AGGREGATOR_URL}/v1/blobs/${encodeURIComponent(blobId)}`;
+  console.log(`[WalrusSDK] reading blob from ${url}`);
+
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to read blob: ${res.status} ${res.statusText}`);
+  }
+
+  const text = await res.text();
+  // Try JSON first, fall back to raw string
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
 }

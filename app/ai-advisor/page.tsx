@@ -92,9 +92,9 @@ export default function AiAdvisorPage() {
       <AppShell title="AI Advisor">
         <div className="flex flex-col items-center justify-center py-24">
           <Bot size={48} className="text-[#C5D0FF] mb-4" />
-          <h2 className="text-lg font-semibold text-[#111827] mb-2">Connect Wallet untuk Insight AI</h2>
+          <h2 className="text-base font-semibold text-[#111827] mb-2">Connect your wallet for AI insights</h2>
           <p className="text-sm text-[#6B7280] mb-6 text-center max-w-md">
-            Finix menganalisis data transaksi on-chain-mu dan ngasih rekomendasi finansial personal.
+            Finix analyzes your on-chain transaction data and provides personalized financial recommendations.
           </p>
           <Button size="lg" onClick={connect} loading={isConnecting}><Wallet size={16} /> Connect Wallet</Button>
         </div>
@@ -208,14 +208,14 @@ export default function AiAdvisorPage() {
             {isLoading || regenerating ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <Loader2 size={24} className="animate-spin text-[#3B5BDB] mb-3" />
-                <p className="text-xs text-[#6B7280]">Menganalisis data keuangan lo...</p>
+                <p className="text-sm text-[#6B7280]">Analyzing your financial data...</p>
               </div>
             ) : error ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <AlertTriangle size={24} className="text-[#B91C1C] mb-3" />
                 <p className="text-xs text-[#6B7280] mb-3">{error}</p>
                 <Button size="sm" onClick={() => generateAnalysis()}>
-                  <Sparkles size={13} /> Coba Lagi
+                  <Sparkles size={13} /> Try Again
                 </Button>
               </div>
             ) : analysis ? (

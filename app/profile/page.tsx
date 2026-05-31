@@ -83,9 +83,9 @@ export default function ProfilePage() {
           <h3 className="text-base font-semibold text-[#111827] mb-4">Wallet Info</h3>
           <div className="space-y-3">
             <div>
-              <p className="text-xs text-[#6B7280] mb-1">Wallet Address</p>
+              <p className="text-sm text-[#6B7280] mb-1">Wallet Address</p>
               <div className="flex items-center gap-2">
-                <code className="text-xs text-[#374151] bg-[#F8FAFC] px-3 py-1.5 rounded-[8px] border border-[#E2E8F0] flex-1">{address}</code>
+                <code className="text-sm text-[#374151] bg-[#F8FAFC] px-3 py-1.5 rounded-[8px] border border-[#E2E8F0] flex-1">{address}</code>
                 <button
                   onClick={() => { navigator.clipboard.writeText(address || ''); showToast('success', 'Address copied'); }}
                   className="p-2 rounded-[8px] text-[#9CA3AF] hover:text-[#3B5BDB] hover:bg-[#EEF2FF]"
@@ -96,14 +96,14 @@ export default function ProfilePage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-[#F8FAFC] rounded-[10px] p-3">
-                <p className="text-2xs text-[#6B7280]">SUI Balance</p>
+                <p className="text-sm text-[#6B7280]">SUI Balance</p>
                 <p className="text-base font-semibold text-[#111827]">—</p>
-                <p className="text-2xs text-[#9CA3AF]">via Tatum RPC</p>
+                <p className="text-xs text-[#9CA3AF]">via Tatum RPC (Testnet)</p>
               </div>
               <div className="bg-[#F8FAFC] rounded-[10px] p-3">
-                <p className="text-2xs text-[#6B7280]">Network</p>
-                <p className="text-base font-semibold text-[#111827]">Sui Mainnet</p>
-                <p className="text-2xs text-[#15803D]">✓ Connected</p>
+                <p className="text-sm text-[#6B7280]">Network</p>
+                <p className="text-base font-semibold text-[#111827]">Sui Testnet</p>
+                <p className="text-xs text-[#15803D]">✓ Connected</p>
               </div>
             </div>
           </div>
@@ -151,7 +151,7 @@ export default function ProfilePage() {
               <Database size={14} className="text-[#15803D] mt-0.5" />
               <div>
                 <p className="text-xs font-medium text-[#111827]">Your data is stored on Walrus</p>
-                <p className="text-xs text-[#6B7280] mt-0.5">All your financial data is stored as decentralized blobs on Walrus mainnet. No centralized database.</p>
+                <p className="text-xs text-[#6B7280] mt-0.5">All your financial data is stored as decentralized blobs on Walrus testnet. No centralized database.</p>
               </div>
             </div>
           </div>

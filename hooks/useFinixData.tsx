@@ -47,7 +47,20 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
 
     try {
-      // Try to load existing data from Walrus
+      // Priority 1: local cache (fastest, most reliable)
+      const cached = localStorage.getItem(`finix_cache_${address}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached) as FinixUserData;
+          if (parsed && parsed.transactions) {
+            setData(parsed);
+            setIsLoading(false);
+            return;
+          }
+        } catch { /* ignore bad cache */ }
+      }
+
+      // Priority 2: Walrus blob
       const savedBlobId = localStorage.getItem(blobIdKey(address));
       if (savedBlobId) {
         setBlobId(savedBlobId);
@@ -55,19 +68,11 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
         const result = await res.json();
         if (result.success && result.data) {
           setData(result.data as FinixUserData);
+          // Also cache locally
+          localStorage.setItem(`finix_cache_${address}`, JSON.stringify(result.data));
           setIsLoading(false);
           return;
         }
-      }
-
-      // Fallback: check localStorage cache
-      const cached = localStorage.getItem(`finix_cache_${address}`);
-      if (cached) {
-        try {
-          setData(JSON.parse(cached));
-          setIsLoading(false);
-          return;
-        } catch { /* ignore */ }
       }
 
       // New user — create empty data
@@ -78,6 +83,31 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     }
   }, []);
+
+  // Check streak expiry: if lastActiveDate > 24 hours ago, reset streak
+  useEffect(() => {
+    if (!data || !walletAddress) return;
+    const lastActive = data.streaks.lastActiveDate;
+    if (!lastActive || data.streaks.currentStreak === 0) return;
+
+    const now = new Date();
+    const lastDate = new Date(lastActive);
+    const diffMs = now.getTime() - lastDate.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+
+    if (diffHours > 36) {
+      // More than 36 hours since last activity — reset streak
+      const updated = {
+        ...data,
+        streaks: {
+          ...data.streaks,
+          currentStreak: 0,
+        },
+      };
+      setData(updated);
+      localStorage.setItem(`finix_cache_${walletAddress}`, JSON.stringify(updated));
+    }
+  }, [walletAddress]); // runs on wallet connect
 
   const disconnectWallet = useCallback(() => {
     setWalletAddress(null);
