@@ -183,7 +183,9 @@ export default function ProfilePage() {
                   showToast('error', 'No blob saved yet — save your data first before exploring');
                   return;
                 }
-                window.open('https://suiscan.xyz/mainnet/object/' + blobId, '_blank');
+                const network = process.env.NEXT_PUBLIC_WALRUS_NETWORK || 'mainnet';
+                const base = network === 'testnet' ? 'testnet' : 'mainnet';
+                window.open('https://suiscan.xyz/' + base + '/object/' + blobId, '_blank');
               }}>
                 <ExternalLink size={13} /> View on Explorer
               </Button>

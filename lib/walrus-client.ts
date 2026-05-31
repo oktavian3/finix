@@ -43,11 +43,14 @@ export async function walrusStore(data: unknown): Promise<WalrusStoreResult> {
   const body = typeof data === 'string' ? data : JSON.stringify(data);
   const encoded = new TextEncoder().encode(body);
 
+  // Use ?epochs=52 for ~1 year of storage
+  const searchParams = '?epochs=52';
+
   // Try each publisher URL in order
   const errors: string[] = [];
   for (const publisherUrl of getPublisherOrder()) {
     try {
-      const res = await fetch(`${publisherUrl}/v1/blobs`, {
+      const res = await fetch(`${publisherUrl}/v1/blobs${searchParams}`, {
         method: 'PUT',
         body: encoded,
         headers: { 'Content-Type': 'application/octet-stream' },

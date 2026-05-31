@@ -250,7 +250,11 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
                 Close
               </Button>
               <Button
-                onClick={() => window.open(`https://suiscan.xyz/mainnet/object/${successBlobId}`, '_blank', 'noopener,noreferrer')}
+                onClick={() => {
+                  const network = process.env.NEXT_PUBLIC_WALRUS_NETWORK || 'mainnet';
+                  const base = network === 'testnet' ? 'testnet' : 'mainnet';
+                  window.open(`https://suiscan.xyz/${base}/object/${successBlobId}`, '_blank', 'noopener,noreferrer');
+                }}
                 className="flex-1"
               >
                 <ExternalLink size={14} />
