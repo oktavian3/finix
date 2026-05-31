@@ -3,11 +3,19 @@ const nextConfig = {
   webpack: (config, { isServer, webpack }) => {
     // Walrus SDK needs WASM — handle it properly
     if (isServer) {
-      // Treat walrus-wasm as external so webpack doesn't rewrite its path
-      config.externals = [...(config.externals || []), '@mysten/walrus-wasm'];
+      config.externals = [
+        ...(config.externals || []),
+        '@mysten/walrus-wasm',
+        '@mysten/walrus',
+      ];
     }
     return config;
   },
+  serverExternalPackages: [
+    '@mysten/walrus',
+    '@mysten/walrus-wasm',
+    '@mysten/sui',
+  ],
 };
 
 export default nextConfig;
