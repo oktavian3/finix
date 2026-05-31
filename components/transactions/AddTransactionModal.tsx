@@ -46,6 +46,7 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [isSaving, setIsSaving] = useState(false);
   const [successBlobId, setSuccessBlobId] = useState<string | null>(null);
+  const [successNetwork, setSuccessNetwork] = useState<'mainnet' | 'testnet'>('mainnet');
 
   const reset = () => {
     setStep(1);
@@ -94,6 +95,7 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
         const result = await res.json();
         if (result.success && result.blobId) {
           setSuccessBlobId(result.objectId || result.blobId);
+          setSuccessNetwork('mainnet');
           showToast('success', 'Transaction saved to Walrus on Sui Mainnet');
           setIsSaving(false);
           return;
@@ -102,9 +104,11 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
       // Server API failed — try client-side HTTP Publisher as fallback
       console.warn('Server Walrus API failed, trying client-side HTTP Publisher...');
       const { walrusStoreHTTP } = await import('@/lib/walrus-http');
-      const httpResult = await walrusStoreHTTP(updatedWithStreak);
+      // Skip mainnet — publisher.walrus.space DNS broken from most locations
+      const httpResult = await walrusStoreHTTP(updatedWithStreak, 'testnet');
       if (httpResult.blobId) {
         setSuccessBlobId(httpResult.objectId || httpResult.blobId);
+        setSuccessNetwork(httpResult.network);
         const networkLabel = httpResult.network === 'mainnet' ? 'Sui Mainnet' : 'Sui Testnet';
         showToast('success', `Transaction saved to Walrus on ${networkLabel}`);
       } else {
@@ -271,7 +275,11 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
                 Close
               </Button>
               <Button
-                onClick={() => window.open(`https://suiscan.xyz/mainnet/object/${successBlobId}`, '_blank', 'noopener,noreferrer')}
+                onClick={() => window.open(
+                `${successNetwork === 'testnet' ? 'https://suiscan.xyz/testnet/object' : 'https://suiscan.xyz/mainnet/object'}/${successBlobId}`,
+                '_blank',
+                'noopener,noreferrer'
+              )}
                 className="flex-1"
               >
                 <ExternalLink size={14} />
