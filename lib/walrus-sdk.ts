@@ -27,9 +27,11 @@ function getKeypair(): Ed25519Keypair {
 function getClient(): WalrusClient {
   if (!_client) {
     const url = process.env.SUI_RPC_URL || MAINNET_RPC;
+    // In Vercel serverless, __dirname is unreliable for WASM.
+    // Copy wasm to public/ and load via URL or rely on @mysten/walrus-wasm package default.
     _client = new WalrusClient({
       network: 'mainnet',
-      suiClient: new SuiJsonRpcClient({ url }),
+      suiClient: new SuiJsonRpcClient({ url, network: 'mainnet' }),
     });
   }
   return _client;
