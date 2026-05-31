@@ -93,7 +93,7 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
       if (!res.ok) throw new Error(`Walrus API returned ${res.status}`);
       const result = await res.json();
       if (result.success && result.blobId) {
-        setSuccessBlobId(result.blobId);
+        setSuccessBlobId(result.objectId || result.blobId);
       } else {
         throw new Error('Invalid Walrus response');
       }

@@ -5,7 +5,6 @@ import { NextRequest, NextResponse } from 'next/server';
 // For testnet: https://publisher.walrus-testnet.walrus.space / https://aggregator.walrus-testnet.walrus.space
 const WALRUS_PUBLISHER = process.env.WALRUS_PUBLISHER_URL || 'https://publisher.walrus-testnet.walrus.space';
 const WALRUS_AGGREGATOR = process.env.WALRUS_AGGREGATOR_URL || 'https://aggregator.walrus-testnet.walrus.space';
-const IS_MAINNET = process.env.NEXT_PUBLIC_SUI_NETWORK === 'mainnet';
 
 /** Write data to Walrus as a blob via HTTP Publisher */
 export async function POST(request: NextRequest) {
@@ -22,9 +21,7 @@ export async function POST(request: NextRequest) {
     const jsonStr = JSON.stringify(data);
     const blob = new TextEncoder().encode(jsonStr);
 
-    const url = IS_MAINNET
-      ? `${WALRUS_PUBLISHER}/v1/blobs?epochs=52`
-      : `${WALRUS_PUBLISHER}/v1/blobs?epochs=52`;
+    const url = `${WALRUS_PUBLISHER}/v1/blobs`;
 
     const res = await fetch(url, {
       method: 'PUT',
@@ -42,9 +39,11 @@ export async function POST(request: NextRequest) {
     // Response format: { newlyCreated: { blobObject: { id, blobId, ... } } }
     // or { alreadyCertified: { blobId } }
     let blobId: string;
+    let objectId: string | null = null;
 
     if (result.newlyCreated) {
-      blobId = result.newlyCreated.blobObject.id;
+      blobId = result.newlyCreated.blobObject.blobId;
+      objectId = result.newlyCreated.blobObject.id;
     } else if (result.alreadyCertified) {
       blobId = result.alreadyCertified.blobId;
     } else {
@@ -55,6 +54,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       blobId,
+      objectId,
       message: 'Data saved to Walrus',
     });
   } catch (error) {
