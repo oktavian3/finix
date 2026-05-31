@@ -90,14 +90,26 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: updatedWithStreak }),
       });
-      if (!res.ok) throw new Error(`Walrus API returned ${res.status}`);
-      const result = await res.json();
-      if (result.success && result.blobId) {
-        setSuccessBlobId(result.objectId || result.blobId);
-      } else {
-        throw new Error(result.error || 'Invalid Walrus response');
+      if (res.ok) {
+        const result = await res.json();
+        if (result.success && result.blobId) {
+          setSuccessBlobId(result.objectId || result.blobId);
+          showToast('success', 'Transaction saved to Walrus on Sui Mainnet');
+          setIsSaving(false);
+          return;
+        }
       }
-      showToast('success', 'Transaction saved to Walrus on Sui Mainnet');
+      // Server API failed — try client-side HTTP Publisher as fallback
+      console.warn('Server Walrus API failed, trying client-side HTTP Publisher...');
+      const { walrusStoreHTTP } = await import('@/lib/walrus-http');
+      const httpResult = await walrusStoreHTTP(updatedWithStreak);
+      if (httpResult.blobId) {
+        setSuccessBlobId(httpResult.objectId || httpResult.blobId);
+        const networkLabel = httpResult.network === 'mainnet' ? 'Sui Mainnet' : 'Sui Testnet';
+        showToast('success', `Transaction saved to Walrus on ${networkLabel}`);
+      } else {
+        throw new Error('No blobId returned from HTTP Publisher');
+      }
     } catch (err) {
       console.error('Walrus storage failed:', err);
       showToast('error', 'Failed to save to Walrus', 'Data saved locally only');
