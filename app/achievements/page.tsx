@@ -43,7 +43,7 @@ export default function AchievementsPage() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[10px] bg-[#EEF2FF] border border-[#C5D0FF]">
             <Wallet size={12} className="text-[#3B5BDB]" />
-            <span className="text-[11px] font-medium text-[#374151]">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
+            <span className="text-xs font-medium text-[#374151]">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
           </div>
         </div>
       }
@@ -52,23 +52,23 @@ export default function AchievementsPage() {
       <div className="grid grid-cols-4 gap-4 mb-6">
         <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4 text-center">
           <Flame size={20} className="mx-auto text-[#C2410C] mb-1" />
-          <p className="text-[20px] font-bold text-[#111827]">{data.streaks.currentStreak}</p>
-          <p className="text-[10px] text-[#6B7280]">Current streak</p>
+          <p className="text-xl font-bold text-[#111827]">{data.streaks.currentStreak}</p>
+          <p className="text-2xs text-[#6B7280]">Current streak</p>
         </div>
         <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4 text-center">
           <Medal size={20} className="mx-auto text-[#D97706] mb-1" />
-          <p className="text-[20px] font-bold text-[#111827]">{data.streaks.longestStreak}</p>
-          <p className="text-[10px] text-[#6B7280]">Longest streak</p>
+          <p className="text-xl font-bold text-[#111827]">{data.streaks.longestStreak}</p>
+          <p className="text-2xs text-[#6B7280]">Longest streak</p>
         </div>
         <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4 text-center">
           <Banknote size={20} className="mx-auto text-[#15803D] mb-1" />
-          <p className="text-[20px] font-bold text-[#111827]">{data.transactions.length}</p>
-          <p className="text-[10px] text-[#6B7280]">Transactions</p>
+          <p className="text-xl font-bold text-[#111827]">{data.transactions.length}</p>
+          <p className="text-2xs text-[#6B7280]">Transactions</p>
         </div>
         <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4 text-center">
           <Trophy size={20} className="mx-auto text-[#3B5BDB] mb-1" />
-          <p className="text-[20px] font-bold text-[#111827]">{earnedCount}/{totalBadges}</p>
-          <p className="text-[10px] text-[#6B7280]">Badges earned</p>
+          <p className="text-xl font-bold text-[#111827]">{earnedCount}/{totalBadges}</p>
+          <p className="text-2xs text-[#6B7280]">Badges earned</p>
         </div>
       </div>
 
@@ -89,13 +89,13 @@ export default function AchievementsPage() {
               <div className={`mb-3 ${isEarned ? 'text-[#3B5BDB]' : 'text-[#D1D5DB]'}`}>
                 <Icon size={32} className={isEarned ? '' : 'grayscale'} />
               </div>
-              <h4 className={`text-[13px] font-semibold ${isEarned ? 'text-[#111827]' : 'text-[#9CA3AF]'}`}>
+              <h4 className={`text-sm font-semibold ${isEarned ? 'text-[#111827]' : 'text-[#9CA3AF]'}`}>
                 {badge.name}
               </h4>
-              <p className={`text-[11px] mt-1 ${isEarned ? 'text-[#6B7280]' : 'text-[#D1D5DB]'}`}>
+              <p className={`text-xs mt-1 ${isEarned ? 'text-[#6B7280]' : 'text-[#D1D5DB]'}`}>
                 {isEarned ? badge.desc : badge.hint}
               </p>
-              {isEarned && <span className="mt-2 text-[11px] text-[#15803D] font-medium">✓ Earned</span>}
+              {isEarned && <span className="mt-2 text-xs text-[#15803D] font-medium">✓ Earned</span>}
             </div>
           );
         })}

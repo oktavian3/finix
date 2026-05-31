@@ -14,8 +14,8 @@ export function GoalsPreview({ goals }: GoalsPreviewProps) {
   return (
     <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-[18px] hover-card">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-[14px] font-semibold text-[#111827]">Goals</h3>
-        <Link href="/goals" className="text-[11px] text-[#3B5BDB] font-medium hover:underline transition-colors duration-200 hover:text-[#2F4BC0]">View all</Link>
+        <h3 className="text-base font-semibold text-[#111827]">Goals</h3>
+        <Link href="/goals" className="text-xs text-[#3B5BDB] font-medium hover:underline transition-colors duration-200 hover:text-[#2F4BC0]">View all</Link>
       </div>
       <div className="space-y-3">
         {active.map((g, i) => {
@@ -29,9 +29,9 @@ export function GoalsPreview({ goals }: GoalsPreviewProps) {
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
                   <span className="transition-transform duration-200 group-hover:scale-110">{g.emoji}</span>
-                  <span className="text-[12px] font-medium text-[#111827] group-hover:text-[#3B5BDB] transition-colors duration-200">{g.name}</span>
+                  <span className="text-xs font-medium text-[#111827] group-hover:text-[#3B5BDB] transition-colors duration-200">{g.name}</span>
                 </div>
-                <span className="text-[11px] text-[#6B7280] font-medium">{progress.toFixed(0)}%</span>
+                <span className="text-xs text-[#6B7280] font-medium">{progress.toFixed(0)}%</span>
               </div>
               <div className="h-2 rounded-full bg-[#EEF2FF] overflow-hidden">
                 <div 
@@ -39,7 +39,7 @@ export function GoalsPreview({ goals }: GoalsPreviewProps) {
                   style={{ width: `${progress}%` }} 
                 />
               </div>
-              <p className="text-[10px] text-[#9CA3AF] mt-0.5">{formatCurrency(g.savedAmount)} of {formatCurrency(g.targetAmount)}</p>
+              <p className="text-2xs text-[#9CA3AF] mt-0.5">{formatCurrency(g.savedAmount)} of {formatCurrency(g.targetAmount)}</p>
             </div>
           );
         })}

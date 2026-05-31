@@ -25,9 +25,9 @@ export function Button({
     danger: 'bg-[#B91C1C] text-white hover:bg-[#A01818] hover:shadow-lg hover:shadow-[#B91C1C]/20 active:bg-[#8B1414] active:scale-[0.98]',
   };
   const sizes = {
-    sm: 'px-3 py-1.5 text-[11px] rounded-[8px] gap-1.5',
-    md: 'px-4 py-2 text-[12px] rounded-[10px] gap-2',
-    lg: 'px-5 py-2.5 text-[13px] rounded-[12px] gap-2',
+    sm: 'px-3 py-1.5 text-xs rounded-[8px] gap-1.5',
+    md: 'px-4 py-2 text-xs rounded-[10px] gap-2',
+    lg: 'px-5 py-2.5 text-sm rounded-[12px] gap-2',
   };
 
   return (

@@ -69,8 +69,8 @@ export default function TransactionsPage() {
       <AppShell title="Transactions">
         <div className="flex flex-col items-center justify-center py-24">
           <Wallet size={48} className="text-[#C5D0FF] mb-4" />
-          <h2 className="text-[18px] font-semibold text-[#111827] mb-2">Connect your wallet</h2>
-          <p className="text-[13px] text-[#6B7280] mb-6">Connect to view and manage transactions</p>
+          <h2 className="text-lg font-semibold text-[#111827] mb-2">Connect your wallet</h2>
+          <p className="text-sm text-[#6B7280] mb-6">Connect to view and manage transactions</p>
           <Button size="lg" onClick={connect} loading={isConnecting}><Wallet size={16} /> Connect Wallet</Button>
         </div>
       </AppShell>
@@ -84,7 +84,7 @@ export default function TransactionsPage() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[10px] bg-[#EEF2FF] border border-[#C5D0FF]">
             <Wallet size={12} className="text-[#3B5BDB]" />
-            <span className="text-[11px] font-medium text-[#374151]">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
+            <span className="text-xs font-medium text-[#374151]">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
           </div>
           <Button size="sm" onClick={() => setIsModalOpen(true)}>
             <Plus size={13} /> Add Transaction
@@ -101,7 +101,7 @@ export default function TransactionsPage() {
             placeholder="Search transactions..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-[12px] border border-[#E2E8F0] rounded-[10px] bg-white focus:outline-none focus:border-[#3B5BDB]"
+            className="w-full pl-9 pr-3 py-2 text-xs border border-[#E2E8F0] rounded-[10px] bg-white focus:outline-none focus:border-[#3B5BDB]"
           />
         </div>
         <div className="flex gap-1.5">
@@ -109,7 +109,7 @@ export default function TransactionsPage() {
             <button
               key={t}
               onClick={() => setFilterType(t)}
-              className={`px-3 py-1.5 text-[11px] font-medium rounded-[8px] transition-all ${
+              className={`px-3 py-1.5 text-xs font-medium rounded-[8px] transition-all ${
                 filterType === t 
                   ? 'bg-[#3B5BDB] text-white' 
                   : 'bg-white border border-[#E2E8F0] text-[#374151] hover:bg-[#F5F7FF]'
@@ -123,7 +123,7 @@ export default function TransactionsPage() {
           type="month"
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(e.target.value)}
-          className="px-3 py-1.5 text-[11px] border border-[#E2E8F0] rounded-[8px] bg-white focus:outline-none focus:border-[#3B5BDB]"
+          className="px-3 py-1.5 text-xs border border-[#E2E8F0] rounded-[8px] bg-white focus:outline-none focus:border-[#3B5BDB]"
         />
       </div>
 
@@ -132,20 +132,20 @@ export default function TransactionsPage() {
         {filteredTxs.map(group => (
           <div key={group.date}>
             <div className="flex items-center justify-between mb-2 px-1">
-              <span className="text-[11px] font-semibold text-[#111827]">{group.date}</span>
-              <span className={`text-[11px] font-semibold ${group.dayTotal >= 0 ? 'text-[#15803D]' : 'text-[#B91C1C]'}`}>
+              <span className="text-xs font-semibold text-[#111827]">{group.date}</span>
+              <span className={`text-xs font-semibold ${group.dayTotal >= 0 ? 'text-[#15803D]' : 'text-[#B91C1C]'}`}>
                 {group.dayTotal >= 0 ? '+' : ''}{formatCurrency(group.dayTotal)}
               </span>
             </div>
             <div className="bg-white border border-[#E2E8F0] rounded-[12px] overflow-hidden">
               {group.transactions.map(t => (
                 <div key={t.id} className="flex items-center gap-3 px-4 py-3 hover:bg-[#F8FAFC] transition-colors border-b border-[#E2E8F0] last:border-b-0 group">
-                  <span className="text-[18px]">{categoryEmojis[t.category || t.source || 'other']}</span>
+                  <span className="text-lg">{categoryEmojis[t.category || t.source || 'other']}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-medium text-[#111827] truncate">{t.description || (t.category || t.source || 'Unknown')}</p>
-                    <p className="text-[10px] text-[#9CA3AF] capitalize">{t.category || t.source || 'other'}</p>
+                    <p className="text-xs font-medium text-[#111827] truncate">{t.description || (t.category || t.source || 'Unknown')}</p>
+                    <p className="text-2xs text-[#9CA3AF] capitalize">{t.category || t.source || 'other'}</p>
                   </div>
-                  <div className={`flex items-center gap-1 text-[12px] font-semibold ${t.type === 'income' ? 'text-[#15803D]' : 'text-[#B91C1C]'}`}>
+                  <div className={`flex items-center gap-1 text-xs font-semibold ${t.type === 'income' ? 'text-[#15803D]' : 'text-[#B91C1C]'}`}>
                     {t.type === 'income' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
                     {formatCurrency(t.amount)}
                   </div>
@@ -161,7 +161,7 @@ export default function TransactionsPage() {
         ))}
         {filteredTxs.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-[13px] text-[#6B7280]">No transactions found</p>
+            <p className="text-sm text-[#6B7280]">No transactions found</p>
           </div>
         )}
       </div>

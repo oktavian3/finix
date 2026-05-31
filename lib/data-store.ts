@@ -167,6 +167,48 @@ export function computeAllSummaries(data: FinixUserData): MonthlySummary[] {
   return getLast6Months().map(m => computeMonthlySummary(data, m));
 }
 
+export function updateStreak(data: FinixUserData): FinixUserData {
+  const today = new Date().toISOString().split('T')[0];
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterday = yesterdayDate.toISOString().split('T')[0];
+
+  const streaks = { ...data.streaks };
+  const lastActive = streaks.lastActiveDate;
+
+  // Check if user added a transaction TODAY
+  const hasActivityToday = data.transactions.some(t => t.date === today);
+
+  if (!hasActivityToday) {
+    // No activity today — no change to streak
+    return { ...data, streaks };
+  }
+
+  if (lastActive === today) {
+    // Already counted today — no change
+    return { ...data, streaks };
+  }
+
+  // New activity today
+  if (lastActive === yesterday || lastActive === '') {
+    // Consecutive day — increment
+    streaks.currentStreak += 1;
+  } else if (lastActive !== today) {
+    // Gap — reset to 1
+    streaks.currentStreak = 1;
+  }
+
+  streaks.longestStreak = Math.max(streaks.longestStreak, streaks.currentStreak);
+  streaks.lastActiveDate = today;
+
+  const updated = { ...data, streaks };
+
+  // Re-check achievements after streak update
+  updated.achievements = checkAchievements(updated);
+
+  return updated;
+}
+
 export function checkAchievements(data: FinixUserData): Achievements {
   const achievements = { ...data.achievements };
   

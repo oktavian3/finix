@@ -60,8 +60,8 @@ export function ToastContainer() {
         >
           <div className="mt-0.5">{icons[toast.type]}</div>
           <div className="flex-1">
-            <p className="text-[12px] font-semibold text-[#111827]">{toast.message}</p>
-            {toast.subtext && <p className="text-[11px] text-[#6B7280] mt-0.5">{toast.subtext}</p>}
+            <p className="text-xs font-semibold text-[#111827]">{toast.message}</p>
+            {toast.subtext && <p className="text-xs text-[#6B7280] mt-0.5">{toast.subtext}</p>}
           </div>
           <button 
             onClick={() => removeToast(toast.id)} 

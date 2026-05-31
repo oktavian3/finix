@@ -26,7 +26,7 @@ export function Sidebar() {
       <div className="px-5 pt-6 pb-4">
         <Link href="/dashboard" className="flex items-center gap-2 group">
           <img src="/finix-logo.png" alt="Finix" className="w-7 h-7 rounded-lg object-cover transition-transform duration-200 group-hover:scale-110" />
-          <span className="text-[16px] font-semibold text-[#111827] transition-colors duration-200 group-hover:text-[#3B5BDB]">Finix</span>
+          <span className="text-md font-semibold text-[#111827] transition-colors duration-200 group-hover:text-[#3B5BDB]">Finix</span>
         </Link>
       </div>
 
@@ -40,7 +40,7 @@ export function Sidebar() {
               key={item.path}
               href={item.path}
               className={`
-                flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-[12px] font-medium transition-all duration-200 mb-0.5
+                flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-xs font-medium transition-all duration-200 mb-0.5
                 ${isActive 
                   ? 'text-[#3B5BDB] bg-[#EEF2FF] shadow-sm' 
                   : 'text-[#374151] hover:text-[#111827] hover:bg-[#F5F7FF] hover:shadow-sm'
@@ -57,19 +57,19 @@ export function Sidebar() {
 
       {/* Powered by */}
       <div className="px-5 pb-6">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] mb-3">Powered by</p>
+        <p className="text-2xs font-semibold uppercase tracking-[0.14em] text-[#9CA3AF] mb-3">Powered by</p>
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 px-3 py-2 rounded-[10px] bg-[#F8FAFC] border border-[#E2E8F0] transition-all duration-200 hover:bg-[#EEF2FF] hover:border-[#C5D0FF] hover-lift cursor-default">
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#3B5BDB] text-white">
               <Waves size={11} />
             </span>
-            <span className="text-[11px] font-semibold text-[#111827]">Sui Network</span>
+            <span className="text-xs font-semibold text-[#111827]">Sui Network</span>
           </div>
           <div className="flex items-center gap-2 px-3 py-2 rounded-[10px] bg-[#F8FAFC] border border-[#E2E8F0] transition-all duration-200 hover:bg-[#EEF2FF] hover:border-[#C5D0FF] hover-lift cursor-default">
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#111827] text-white">
               <Database size={11} />
             </span>
-            <span className="text-[11px] font-semibold text-[#111827]">Walrus</span>
+            <span className="text-xs font-semibold text-[#111827]">Walrus</span>
           </div>
         </div>
       </div>

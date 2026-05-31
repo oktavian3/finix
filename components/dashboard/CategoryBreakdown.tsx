@@ -31,7 +31,7 @@ export function CategoryBreakdown({ byCategory, totalExpense, transactions = [] 
 
   return (
     <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-[18px] hover-card">
-      <h3 className="text-[14px] font-semibold text-[#111827] mb-4">Spending by Category</h3>
+      <h3 className="text-base font-semibold text-[#111827] mb-4">Spending by Category</h3>
       <div className="space-y-1">
         {sorted.map(([cat, amount]) => {
           const config = categoryConfig[cat] || categoryConfig.other;
@@ -49,9 +49,9 @@ export function CategoryBreakdown({ byCategory, totalExpense, transactions = [] 
                 <div className="transition-transform duration-200 group-hover:scale-110">
                   <Icon size={13} color={config.color} />
                 </div>
-                <span className="flex-1 text-[12px] font-medium text-[#374151] group-hover:text-[#111827] transition-colors duration-200">{config.label}</span>
-                <span className="text-[12px] font-semibold text-[#111827]">{formatCurrency(amount)}</span>
-                <span className="text-[11px] text-[#6B7280] w-[40px] text-right">{percentage.toFixed(0)}%</span>
+                <span className="flex-1 text-xs font-medium text-[#374151] group-hover:text-[#111827] transition-colors duration-200">{config.label}</span>
+                <span className="text-xs font-semibold text-[#111827]">{formatCurrency(amount)}</span>
+                <span className="text-xs text-[#6B7280] w-[40px] text-right">{percentage.toFixed(0)}%</span>
                 <div className="w-[60px] h-1.5 rounded-full bg-[#EEF2FF] overflow-hidden">
                   <div 
                     className="h-1.5 rounded-full transition-all duration-500 ease-out" 
@@ -66,8 +66,8 @@ export function CategoryBreakdown({ byCategory, totalExpense, transactions = [] 
                 <div className="ml-9 pl-3 border-l-2 border-[#EEF2FF] space-y-1 pb-1 animate-fade-in">
                   {catTransactions.slice(0, 5).map(t => (
                     <div key={t.id} className="flex items-center justify-between py-1 hover:bg-[#F8FAFC] rounded px-2 transition-colors duration-150">
-                      <span className="text-[11px] text-[#6B7280]">{t.description || '—'}</span>
-                      <span className="text-[11px] font-medium text-[#B91C1C]">{formatCurrency(t.amount)}</span>
+                      <span className="text-xs text-[#6B7280]">{t.description || '—'}</span>
+                      <span className="text-xs font-medium text-[#B91C1C]">{formatCurrency(t.amount)}</span>
                     </div>
                   ))}
                 </div>

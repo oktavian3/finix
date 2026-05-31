@@ -48,11 +48,11 @@ export function MetricCard({ label, value, type = 'balance', vsLastMonth, onClic
     >
       <div className="flex items-center gap-2">
         <div className={`w-1.5 h-1.5 rounded-full ${accentColor} transition-transform duration-200 group-hover:scale-150`} />
-        <p className="text-[11px] text-[#6B7280] font-medium">{label}</p>
+        <p className="text-xs text-[#6B7280] font-medium">{label}</p>
       </div>
-      <p className={`mt-2 text-[22px] font-semibold ${valueColor} transition-colors duration-200`}>{displayValue}</p>
+      <p className={`mt-2 text-2xl font-semibold ${valueColor} transition-colors duration-200`}>{displayValue}</p>
       {vsLastMonth !== undefined && (
-        <div className={`mt-2 flex items-center gap-1 text-[11px] ${isPositive ? 'text-[#15803D]' : isNegative ? 'text-[#B91C1C]' : 'text-[#6B7280]'}`}>
+        <div className={`mt-2 flex items-center gap-1 text-xs ${isPositive ? 'text-[#15803D]' : isNegative ? 'text-[#B91C1C]' : 'text-[#6B7280]'}`}>
           {isPositive ? <TrendingUp size={12} /> : isNegative ? <TrendingDown size={12} /> : null}
           <span>{isPositive ? '+' : ''}{vsLastMonth}% vs last month</span>
         </div>

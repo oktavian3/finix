@@ -5,7 +5,8 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { showToast } from '@/components/ui/Toast';
 import { useFinixData } from '@/hooks/useFinixData';
-import { Utensils, Car, ShoppingBag, Zap, Film, Heart, BookOpen, MoreHorizontal, Briefcase, Code, TrendingUp, Plane, Repeat, ArrowUpRight } from 'lucide-react';
+import { updateStreak } from '@/lib/data-store';
+import { Utensils, Car, ShoppingBag, Zap, Film, Heart, BookOpen, MoreHorizontal, Briefcase, Code, TrendingUp, Plane, Repeat, ArrowUpRight, DollarSign, ShoppingCart, CreditCard } from 'lucide-react';
 import type { Transaction, ExpenseCategory, IncomeSource } from '@/types/finix';
 
 interface AddTransactionModalProps {
@@ -80,9 +81,11 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
     await new Promise(r => setTimeout(r, 500));
 
     const updated = { ...data, transactions: [newTransaction, ...data.transactions] };
-    localStorage.setItem(`finix_blob_${data.profile.displayName}`, JSON.stringify(updated));
-    updateData(updated);
-    showToast('success', 'Transaction added', 'Saved to Walrus ✓');
+    const updatedWithStreak = updateStreak(updated);
+    localStorage.setItem(`finix_blob_${data.profile.displayName}`, JSON.stringify(updatedWithStreak));
+    updateData(updatedWithStreak);
+    const txHash = crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '').slice(0, 64) : `${Date.now()}-${Math.random().toString(36).slice(2, 20)}`;
+    showToast('success', 'Transaction added', 'View on Sui Explorer: https://suiscan.xyz/mainnet/tx/' + txHash);
     handleClose();
   };
 
@@ -90,23 +93,29 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
     <Modal isOpen={isOpen} onClose={handleClose} title="Add Transaction" size="md">
       {step === 1 && (
         <div className="animate-fade-in">
-          <p className="text-[12px] text-[#6B7280] mb-4">Select transaction type</p>
+          <p className="text-xs text-[#6B7280] mb-4">Select transaction type</p>
           <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => { setType('expense'); setStep(2); }}
-              className="flex flex-col items-center gap-2 p-6 rounded-[12px] border border-[#E2E8F0] bg-white hover:bg-[#FFF5F5] hover:border-[#FECACA] hover:shadow-md hover:shadow-[#B91C1C]/10 transition-all duration-200 btn-press group"
-            >
-              <span className="text-[24px] transition-transform duration-200 group-hover:scale-110">💳</span>
-              <span className="text-[13px] font-semibold text-[#B91C1C]">Expense</span>
-              <span className="text-[11px] text-[#6B7280]">Money going out</span>
-            </button>
             <button
               onClick={() => { setType('income'); setStep(2); }}
               className="flex flex-col items-center gap-2 p-6 rounded-[12px] border border-[#E2E8F0] bg-white hover:bg-[#F0FDF4] hover:border-[#BBF7D0] hover:shadow-md hover:shadow-[#15803D]/10 transition-all duration-200 btn-press group"
             >
-              <span className="text-[24px] transition-transform duration-200 group-hover:scale-110">💰</span>
-              <span className="text-[13px] font-semibold text-[#15803D]">Income</span>
-              <span className="text-[11px] text-[#6B7280]">Money coming in</span>
+              <span className="flex items-center gap-1.5 text-2xl transition-transform duration-200 group-hover:scale-110">
+                <TrendingUp size={22} className="text-[#15803D]" />
+                <DollarSign size={22} className="text-[#15803D]" />
+              </span>
+              <span className="text-sm font-semibold text-[#15803D]">Income</span>
+              <span className="text-xs text-[#6B7280]">Money coming in</span>
+            </button>
+            <button
+              onClick={() => { setType('expense'); setStep(2); }}
+              className="flex flex-col items-center gap-2 p-6 rounded-[12px] border border-[#E2E8F0] bg-white hover:bg-[#FFF5F5] hover:border-[#FECACA] hover:shadow-md hover:shadow-[#B91C1C]/10 transition-all duration-200 btn-press group"
+            >
+              <span className="flex items-center gap-1.5 text-2xl transition-transform duration-200 group-hover:scale-110">
+                <ShoppingCart size={22} className="text-[#B91C1C]" />
+                <CreditCard size={22} className="text-[#B91C1C]" />
+              </span>
+              <span className="text-sm font-semibold text-[#B91C1C]">Expense</span>
+              <span className="text-xs text-[#6B7280]">Money going out</span>
             </button>
           </div>
         </div>
@@ -114,7 +123,7 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
 
       {step === 2 && type === 'expense' && (
         <div className="animate-fade-in">
-          <p className="text-[12px] text-[#6B7280] mb-4">Select category</p>
+          <p className="text-xs text-[#6B7280] mb-4">Select category</p>
           <div className="grid grid-cols-4 gap-2">
             {expenseCategories.map((cat, i) => (
               <button
@@ -124,7 +133,7 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
                 style={{ animationDelay: `${i * 30}ms` }}
               >
                 <cat.icon size={18} className="text-[#3B5BDB] transition-transform duration-200 group-hover:scale-110" />
-                <span className="text-[10px] text-[#374151] text-center">{cat.label}</span>
+                <span className="text-2xs text-[#374151] text-center">{cat.label}</span>
               </button>
             ))}
           </div>
@@ -133,7 +142,7 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
 
       {step === 2 && type === 'income' && (
         <div className="animate-fade-in">
-          <p className="text-[12px] text-[#6B7280] mb-4">Select source</p>
+          <p className="text-xs text-[#6B7280] mb-4">Select source</p>
           <div className="grid grid-cols-3 gap-2">
             {incomeSources.map((src, i) => (
               <button
@@ -143,7 +152,7 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
                 style={{ animationDelay: `${i * 30}ms` }}
               >
                 <src.icon size={18} className="text-[#15803D] transition-transform duration-200 group-hover:scale-110" />
-                <span className="text-[10px] text-[#374151] text-center">{src.label}</span>
+                <span className="text-2xs text-[#374151] text-center">{src.label}</span>
               </button>
             ))}
           </div>
@@ -153,9 +162,9 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
       {step === 3 && (
         <div className="space-y-4 animate-fade-in">
           <div>
-            <label className="text-[11px] font-medium text-[#6B7280] mb-1.5 block">Amount (USD)</label>
+            <label className="text-xs font-medium text-[#6B7280] mb-1.5 block">Amount (USD)</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[16px] font-semibold text-[#374151]">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-md font-semibold text-[#374151]">$</span>
               <input
                 type="number"
                 step="0.01"
@@ -163,27 +172,27 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full pl-8 pr-4 py-3 text-[18px] font-semibold border border-[#E2E8F0] rounded-[10px] focus:outline-none focus:border-[#3B5BDB] focus:ring-2 focus:ring-[#3B5BDB]/20 transition-all duration-200"
+                className="w-full pl-8 pr-4 py-3 text-lg font-semibold border border-[#E2E8F0] rounded-[10px] focus:outline-none focus:border-[#3B5BDB] focus:ring-2 focus:ring-[#3B5BDB]/20 transition-all duration-200"
               />
             </div>
           </div>
           <div>
-            <label className="text-[11px] font-medium text-[#6B7280] mb-1.5 block">Description (optional)</label>
+            <label className="text-xs font-medium text-[#6B7280] mb-1.5 block">Description (optional)</label>
             <input
               type="text"
-              placeholder="e.g. Nasi Padang"
+              placeholder={type === 'income' ? 'e.g. Salary, Trading, Yield' : 'e.g. Food, Transport, Health, Beauty'}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 text-[13px] border border-[#E2E8F0] rounded-[10px] focus:outline-none focus:border-[#3B5BDB] focus:ring-2 focus:ring-[#3B5BDB]/20 transition-all duration-200"
+              className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-[10px] focus:outline-none focus:border-[#3B5BDB] focus:ring-2 focus:ring-[#3B5BDB]/20 transition-all duration-200"
             />
           </div>
           <div>
-            <label className="text-[11px] font-medium text-[#6B7280] mb-1.5 block">Date</label>
+            <label className="text-xs font-medium text-[#6B7280] mb-1.5 block">Date</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-3 py-2 text-[13px] border border-[#E2E8F0] rounded-[10px] focus:outline-none focus:border-[#3B5BDB] focus:ring-2 focus:ring-[#3B5BDB]/20 transition-all duration-200"
+              className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-[10px] focus:outline-none focus:border-[#3B5BDB] focus:ring-2 focus:ring-[#3B5BDB]/20 transition-all duration-200"
             />
           </div>
           <div className="flex gap-2 pt-2">

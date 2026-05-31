@@ -92,8 +92,8 @@ export default function AiAdvisorPage() {
       <AppShell title="AI Advisor">
         <div className="flex flex-col items-center justify-center py-24">
           <Bot size={48} className="text-[#C5D0FF] mb-4" />
-          <h2 className="text-[18px] font-semibold text-[#111827] mb-2">Connect Wallet untuk Insight AI</h2>
-          <p className="text-[13px] text-[#6B7280] mb-6 text-center max-w-md">
+          <h2 className="text-lg font-semibold text-[#111827] mb-2">Connect Wallet untuk Insight AI</h2>
+          <p className="text-sm text-[#6B7280] mb-6 text-center max-w-md">
             Finix menganalisis data transaksi on-chain-mu dan ngasih rekomendasi finansial personal.
           </p>
           <Button size="lg" onClick={connect} loading={isConnecting}><Wallet size={16} /> Connect Wallet</Button>
@@ -113,7 +113,7 @@ export default function AiAdvisorPage() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[10px] bg-[#EEF2FF] border border-[#C5D0FF]">
             <Wallet size={12} className="text-[#3B5BDB]" />
-            <span className="text-[11px] font-medium text-[#374151]">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
+            <span className="text-xs font-medium text-[#374151]">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
           </div>
         </div>
       }
@@ -124,32 +124,32 @@ export default function AiAdvisorPage() {
           <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp size={14} className="text-[#15803D]" />
-              <span className="text-[10px] font-semibold text-[#6B7280] uppercase tracking-wider">Income</span>
+              <span className="text-2xs font-semibold text-[#6B7280] uppercase tracking-wider">Income</span>
             </div>
-            <p className="text-[18px] font-bold text-[#111827]">{formatCurrency(currentSummary.totalIncome)}</p>
+            <p className="text-lg font-bold text-[#111827]">{formatCurrency(currentSummary.totalIncome)}</p>
           </div>
           <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4">
             <div className="flex items-center gap-2 mb-2">
               <AlertTriangle size={14} className="text-[#B91C1C]" />
-              <span className="text-[10px] font-semibold text-[#6B7280] uppercase tracking-wider">Expenses</span>
+              <span className="text-2xs font-semibold text-[#6B7280] uppercase tracking-wider">Expenses</span>
             </div>
-            <p className="text-[18px] font-bold text-[#111827]">{formatCurrency(currentSummary.totalExpense)}</p>
+            <p className="text-lg font-bold text-[#111827]">{formatCurrency(currentSummary.totalExpense)}</p>
           </div>
           <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4">
             <div className="flex items-center gap-2 mb-2">
               <PiggyBank size={14} className="text-[#3B5BDB]" />
-              <span className="text-[10px] font-semibold text-[#6B7280] uppercase tracking-wider">Saving Rate</span>
+              <span className="text-2xs font-semibold text-[#6B7280] uppercase tracking-wider">Saving Rate</span>
             </div>
-            <p className={`text-[18px] font-bold ${currentSummary.savingRate >= 30 ? 'text-[#15803D]' : 'text-[#B91C1C]'}`}>
+            <p className={`text-lg font-bold ${currentSummary.savingRate >= 30 ? 'text-[#15803D]' : 'text-[#B91C1C]'}`}>
               {currentSummary.savingRate}%
             </p>
           </div>
           <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4">
             <div className="flex items-center gap-2 mb-2">
               <Target size={14} className="text-[#6D28D9]" />
-              <span className="text-[10px] font-semibold text-[#6B7280] uppercase tracking-wider">Goals</span>
+              <span className="text-2xs font-semibold text-[#6B7280] uppercase tracking-wider">Goals</span>
             </div>
-            <p className="text-[18px] font-bold text-[#111827]">
+            <p className="text-lg font-bold text-[#111827]">
               {data.goals.filter(g => g.savedAmount >= g.targetAmount).length}/{data.goals.length}
             </p>
           </div>
@@ -158,23 +158,23 @@ export default function AiAdvisorPage() {
         {/* Category & Source mini-table */}
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4">
-            <h4 className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider mb-3">Top Expenses</h4>
+            <h4 className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-3">Top Expenses</h4>
             <div className="space-y-2">
               {topCategory.slice(0, 4).map(([cat, amt]) => (
                 <div key={cat} className="flex items-center justify-between">
-                  <span className="text-[12px] text-[#374151] capitalize">{cat}</span>
-                  <span className="text-[12px] font-medium text-[#B91C1C]">{formatCurrency(amt)}</span>
+                  <span className="text-xs text-[#374151] capitalize">{cat}</span>
+                  <span className="text-xs font-medium text-[#B91C1C]">{formatCurrency(amt)}</span>
                 </div>
               ))}
             </div>
           </div>
           <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4">
-            <h4 className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider mb-3">Top Income Sources</h4>
+            <h4 className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-3">Top Income Sources</h4>
             <div className="space-y-2">
               {topSource.slice(0, 4).map(([src, amt]) => (
                 <div key={src} className="flex items-center justify-between">
-                  <span className="text-[12px] text-[#374151] capitalize">{src}</span>
-                  <span className="text-[12px] font-medium text-[#15803D]">{formatCurrency(amt)}</span>
+                  <span className="text-xs text-[#374151] capitalize">{src}</span>
+                  <span className="text-xs font-medium text-[#15803D]">{formatCurrency(amt)}</span>
                 </div>
               ))}
             </div>
@@ -188,32 +188,32 @@ export default function AiAdvisorPage() {
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#3B5BDB] to-[#6D28D9] flex items-center justify-center">
                 <Bot size={14} className="text-white" />
               </div>
-              <span className="text-[12px] font-semibold text-[#111827]">AI Analysis</span>
+              <span className="text-xs font-semibold text-[#111827]">AI Analysis</span>
             </div>
             <div className="flex items-center gap-2">
               {analysis && (
                 <button
                   onClick={handleRegenerate}
                   disabled={regenerating}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium text-[#3B5BDB] hover:bg-[#EEF2FF] rounded-[8px] transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-[#3B5BDB] hover:bg-[#EEF2FF] rounded-[8px] transition-colors disabled:opacity-50"
                 >
                   <Sparkles size={13} />
                   Regenerate
                 </button>
               )}
-              <span className="text-[10px] text-[#9CA3AF]">DeepSeek</span>
+              <span className="text-2xs text-[#9CA3AF]">DeepSeek</span>
             </div>
           </div>
           <div className="p-5 min-h-[200px]">
             {isLoading || regenerating ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <Loader2 size={24} className="animate-spin text-[#3B5BDB] mb-3" />
-                <p className="text-[12px] text-[#6B7280]">Menganalisis data keuangan lo...</p>
+                <p className="text-xs text-[#6B7280]">Menganalisis data keuangan lo...</p>
               </div>
             ) : error ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <AlertTriangle size={24} className="text-[#B91C1C] mb-3" />
-                <p className="text-[12px] text-[#6B7280] mb-3">{error}</p>
+                <p className="text-xs text-[#6B7280] mb-3">{error}</p>
                 <Button size="sm" onClick={() => generateAnalysis()}>
                   <Sparkles size={13} /> Coba Lagi
                 </Button>
@@ -224,27 +224,27 @@ export default function AiAdvisorPage() {
                   if (!line.trim()) return <br key={i} />;
                   if (line.startsWith('###') || line.startsWith('##') || line.startsWith('#')) {
                     return (
-                      <h3 key={i} className="text-[14px] font-semibold text-[#111827] mt-4 mb-2">
+                      <h3 key={i} className="text-base font-semibold text-[#111827] mt-4 mb-2">
                         {line.replace(/^#+\s*/, '')}
                       </h3>
                     );
                   }
                   if (line.startsWith('- ') || line.startsWith('* ')) {
                     return (
-                      <li key={i} className="text-[12px] text-[#374151] leading-6 ml-4 list-disc">
+                      <li key={i} className="text-xs text-[#374151] leading-6 ml-4 list-disc">
                         {line.replace(/^[-*]\s*/, '')}
                       </li>
                     );
                   }
                   if (/^\d+[\.\)]/.test(line)) {
                     return (
-                      <li key={i} className="text-[12px] text-[#374151] leading-6 ml-4 list-decimal">
+                      <li key={i} className="text-xs text-[#374151] leading-6 ml-4 list-decimal">
                         {line.replace(/^\d+[\.\)]\s*/, '')}
                       </li>
                     );
                   }
                   return (
-                    <p key={i} className="text-[12px] text-[#374151] leading-6 mb-1">
+                    <p key={i} className="text-xs text-[#374151] leading-6 mb-1">
                       {line}
                     </p>
                   );
@@ -253,7 +253,7 @@ export default function AiAdvisorPage() {
             ) : (
               <div className="flex flex-col items-center justify-center py-12">
                 <Bot size={24} className="text-[#C5D0FF] mb-3" />
-                <p className="text-[12px] text-[#6B7280]">Generating analysis...</p>
+                <p className="text-xs text-[#6B7280]">Generating analysis...</p>
               </div>
             )}
           </div>
@@ -263,8 +263,8 @@ export default function AiAdvisorPage() {
         <div className="bg-gradient-to-br from-[#3B5BDB] to-[#6D28D9] rounded-[12px] p-4 text-white flex items-start gap-3">
           <Bot size={18} className="shrink-0 mt-0.5" />
           <div>
-            <p className="text-[12px] font-semibold mb-1">Privacy First 🔒</p>
-            <p className="text-[11px] leading-5 opacity-90">
+            <p className="text-xs font-semibold mb-1">Privacy First 🔒</p>
+            <p className="text-xs leading-5 opacity-90">
               AI cuma nerima data agregat (ringkasan bulanan, kategori, goals) — transaksi raw lo tetap aman di Walrus. 
               Nggak ada chat, nggak ada prompt injection. Pure data-driven insights.
             </p>

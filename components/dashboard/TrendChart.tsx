@@ -17,7 +17,7 @@ export function TrendChart({ data }: TrendChartProps) {
 
   return (
     <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-[18px]">
-      <h3 className="text-[14px] font-semibold text-[#111827] mb-4">6-Month Trend</h3>
+      <h3 className="text-base font-semibold text-[#111827] mb-4">6-Month Trend</h3>
       <div className="h-[220px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData}>

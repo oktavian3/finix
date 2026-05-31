@@ -52,7 +52,7 @@ export default function AnalyticsPage() {
       <AppShell title="Analytics">
         <div className="flex flex-col items-center justify-center py-24">
           <Wallet size={48} className="text-[#C5D0FF] mb-4" />
-          <h2 className="text-[18px] font-semibold text-[#111827] mb-2">Connect wallet to view analytics</h2>
+          <h2 className="text-lg font-semibold text-[#111827] mb-2">Connect wallet to view analytics</h2>
           <Button size="lg" onClick={connect} loading={isConnecting}><Wallet size={16} /> Connect Wallet</Button>
         </div>
       </AppShell>
@@ -67,7 +67,7 @@ export default function AnalyticsPage() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[10px] bg-[#EEF2FF] border border-[#C5D0FF]">
             <Wallet size={12} className="text-[#3B5BDB]" />
-            <span className="text-[11px] font-medium text-[#374151]">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
+            <span className="text-xs font-medium text-[#374151]">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
           </div>
         </div>
       }
@@ -78,7 +78,7 @@ export default function AnalyticsPage() {
           <button
             key={p}
             onClick={() => setPeriod(p)}
-            className={`px-3 py-1.5 text-[11px] font-medium rounded-[8px] transition-all ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-[8px] transition-all ${
               period === p ? 'bg-[#3B5BDB] text-white' : 'bg-white border border-[#E2E8F0] text-[#374151] hover:bg-[#F5F7FF]'
             }`}
           >
@@ -90,31 +90,31 @@ export default function AnalyticsPage() {
       {/* Overview Stats */}
       <div className="grid grid-cols-4 gap-4 mb-5">
         <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4">
-          <p className="text-[11px] text-[#6B7280]">Income</p>
-          <p className="text-[18px] font-semibold text-[#15803D] mt-1">{formatCurrency(currentSummary.totalIncome)}</p>
-          {lastPeriod && <p className="text-[10px] text-[#6B7280] mt-1">{incomeChange >= 0 ? '↑' : '↓'} vs last period</p>}
+          <p className="text-xs text-[#6B7280]">Income</p>
+          <p className="text-lg font-semibold text-[#15803D] mt-1">{formatCurrency(currentSummary.totalIncome)}</p>
+          {lastPeriod && <p className="text-2xs text-[#6B7280] mt-1">{incomeChange >= 0 ? '↑' : '↓'} vs last period</p>}
         </div>
         <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4">
-          <p className="text-[11px] text-[#6B7280]">Expenses</p>
-          <p className="text-[18px] font-semibold text-[#B91C1C] mt-1">{formatCurrency(currentSummary.totalExpense)}</p>
-          {lastPeriod && <p className="text-[10px] text-[#6B7280] mt-1">{expenseChange >= 0 ? '↑' : '↓'} vs last period</p>}
+          <p className="text-xs text-[#6B7280]">Expenses</p>
+          <p className="text-lg font-semibold text-[#B91C1C] mt-1">{formatCurrency(currentSummary.totalExpense)}</p>
+          {lastPeriod && <p className="text-2xs text-[#6B7280] mt-1">{expenseChange >= 0 ? '↑' : '↓'} vs last period</p>}
         </div>
         <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4">
-          <p className="text-[11px] text-[#6B7280]">Net Saved</p>
-          <p className={`text-[18px] font-semibold mt-1 ${currentSummary.netBalance >= 0 ? 'text-[#111827]' : 'text-[#B91C1C]'}`}>
+          <p className="text-xs text-[#6B7280]">Net Saved</p>
+          <p className={`text-lg font-semibold mt-1 ${currentSummary.netBalance >= 0 ? 'text-[#111827]' : 'text-[#B91C1C]'}`}>
             {formatCurrency(currentSummary.netBalance)}
           </p>
         </div>
         <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-4">
-          <p className="text-[11px] text-[#6B7280]">Saving Rate</p>
-          <p className="text-[18px] font-semibold text-[#3B5BDB] mt-1">{currentSummary.savingRate}%</p>
-          {lastPeriod && <p className="text-[10px] mt-1" style={{color: rateChange >= 0 ? '#15803D' : '#B91C1C'}}>{rateChange >= 0 ? '↑' : '↓'} {Math.abs(rateChange)}%</p>}
+          <p className="text-xs text-[#6B7280]">Saving Rate</p>
+          <p className="text-lg font-semibold text-[#3B5BDB] mt-1">{currentSummary.savingRate}%</p>
+          {lastPeriod && <p className="text-2xs mt-1" style={{color: rateChange >= 0 ? '#15803D' : '#B91C1C'}}>{rateChange >= 0 ? '↑' : '↓'} {Math.abs(rateChange)}%</p>}
         </div>
       </div>
 
       {/* Income vs Expense Trend */}
       <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-[18px] mb-5">
-        <h3 className="text-[14px] font-semibold text-[#111827] mb-4">Income vs Expense</h3>
+        <h3 className="text-base font-semibold text-[#111827] mb-4">Income vs Expense</h3>
         <div className="h-[250px]">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={areaData}>
@@ -132,7 +132,7 @@ export default function AnalyticsPage() {
       {/* Category Pie + Rate Trend */}
       <div className="grid grid-cols-2 gap-5 mb-5">
         <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-[18px]">
-          <h3 className="text-[14px] font-semibold text-[#111827] mb-4">Spending by Category</h3>
+          <h3 className="text-base font-semibold text-[#111827] mb-4">Spending by Category</h3>
           <div className="flex items-center gap-4">
             <div className="h-[180px] w-[180px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -148,9 +148,9 @@ export default function AnalyticsPage() {
                 <div key={cat.name} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                    <span className="text-[11px] text-[#374151] capitalize">{cat.name}</span>
+                    <span className="text-xs text-[#374151] capitalize">{cat.name}</span>
                   </div>
-                  <span className="text-[11px] font-medium text-[#111827]">{formatCurrency(cat.value)}</span>
+                  <span className="text-xs font-medium text-[#111827]">{formatCurrency(cat.value)}</span>
                 </div>
               ))}
             </div>
@@ -158,7 +158,7 @@ export default function AnalyticsPage() {
         </div>
 
         <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-[18px]">
-          <h3 className="text-[14px] font-semibold text-[#111827] mb-4">Saving Rate Trend</h3>
+          <h3 className="text-base font-semibold text-[#111827] mb-4">Saving Rate Trend</h3>
           <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={rateData}>
