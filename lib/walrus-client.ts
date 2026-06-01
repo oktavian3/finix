@@ -4,8 +4,7 @@
  * Walrus publisher CORS allows all origins (*), so we can PUT blobs
  * straight from the user's browser without proxying through a server.
  *
- * Auto-fallback: tries mainnet first; if the publisher is unreachable
- * (DNS failure / network error), falls back to testnet automatically.
+ * Auto-fallback: tries testnet by default for the working hackathon flow.
  *
  * Override via env vars:
  *   NEXT_PUBLIC_WALRUS_PUBLISHER_URL — full custom publisher URL (highest priority)
@@ -18,13 +17,13 @@ const DEFAULT_TESTNET = 'https://publisher.walrus-testnet.walrus.space';
 const AGGREGATOR_MAINNET = 'https://aggregator.walrus.space';
 const AGGREGATOR_TESTNET = 'https://aggregator.walrus-testnet.walrus.space';
 
-const NETWORK = process.env.NEXT_PUBLIC_WALRUS_NETWORK || 'mainnet';
+const NETWORK = process.env.NEXT_PUBLIC_WALRUS_NETWORK || 'testnet';
 
 function getPublisherOrder(): string[] {
   const envUrl = process.env.NEXT_PUBLIC_WALRUS_PUBLISHER_URL;
   if (envUrl) return [envUrl];
   if (NETWORK === 'testnet') return [DEFAULT_TESTNET];
-  return [DEFAULT_MAINNET, DEFAULT_TESTNET]; // mainnet first, fallback to testnet
+  return [DEFAULT_MAINNET, DEFAULT_TESTNET];
 }
 
 interface WalrusStoreResult {

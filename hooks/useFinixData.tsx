@@ -21,6 +21,9 @@ interface FinixDataContextType {
   saveToWalrus: () => Promise<void>;
   isSaving: boolean;
   blobId: string | null;
+  objectId: string | null;
+  walrusNetwork: 'mainnet' | 'testnet' | null;
+  registerWalrusSnapshot: (snapshot: { blobId: string; objectId?: string | null; network?: 'mainnet' | 'testnet' }) => void;
 }
 
 const FinixDataContext = createContext<FinixDataContextType | null>(null);
@@ -30,6 +33,14 @@ function blobIdKey(address: string): string {
   return `finix_blobid_${address}`;
 }
 
+function objectIdKey(address: string): string {
+  return `finix_objectid_${address}`;
+}
+
+function walrusNetworkKey(address: string): string {
+  return `finix_walrus_network_${address}`;
+}
+
 export function FinixDataProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<FinixUserData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,6 +48,8 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [blobId, setBlobId] = useState<string | null>(null);
+  const [objectId, setObjectId] = useState<string | null>(null);
+  const [walrusNetwork, setWalrusNetwork] = useState<'mainnet' | 'testnet' | null>(null);
   const currentAccount = useCurrentAccount();
   const initialized = useRef(false);
 
@@ -74,6 +87,9 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
         const savedBlobId = localStorage.getItem(blobIdKey(addr));
         if (savedBlobId) {
           setBlobId(savedBlobId);
+          setObjectId(localStorage.getItem(objectIdKey(addr)));
+          const savedNetwork = localStorage.getItem(walrusNetworkKey(addr));
+          setWalrusNetwork(savedNetwork === 'testnet' ? 'testnet' : 'mainnet');
           const res = await fetch(`/api/walrus?blobId=${encodeURIComponent(savedBlobId)}`);
           const result = await res.json();
           if (result.success && result.data) {
@@ -127,7 +143,23 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
     setIsConnected(false);
     setData(null);
     setBlobId(null);
+    setObjectId(null);
+    setWalrusNetwork(null);
   }, []);
+
+  const registerWalrusSnapshot = useCallback((snapshot: { blobId: string; objectId?: string | null; network?: 'mainnet' | 'testnet' }) => {
+    if (!walletAddress) return;
+    setBlobId(snapshot.blobId);
+    setObjectId(snapshot.objectId || null);
+    setWalrusNetwork(snapshot.network || 'mainnet');
+    localStorage.setItem(blobIdKey(walletAddress), snapshot.blobId);
+    if (snapshot.objectId) {
+      localStorage.setItem(objectIdKey(walletAddress), snapshot.objectId);
+    } else {
+      localStorage.removeItem(objectIdKey(walletAddress));
+    }
+    localStorage.setItem(walrusNetworkKey(walletAddress), snapshot.network || 'mainnet');
+  }, [walletAddress]);
 
   const updateData = useCallback((newData: FinixUserData) => {
     // Always re-check achievements on any data update
@@ -169,8 +201,11 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
       const result = await res.json();
       if (result.success) {
         const newBlobId = result.blobId;
-        setBlobId(newBlobId);
-        localStorage.setItem(blobIdKey(walletAddress), newBlobId);
+        registerWalrusSnapshot({
+          blobId: newBlobId,
+          objectId: result.objectId || null,
+          network: result.network === 'testnet' ? 'testnet' : 'mainnet',
+        });
         // Update cached copy
         localStorage.setItem(`finix_cache_${walletAddress}`, JSON.stringify(data));
       } else {
@@ -184,7 +219,7 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsSaving(false);
     }
-  }, [data, walletAddress]);
+  }, [data, registerWalrusSnapshot, walletAddress]);
 
   // Auto-save on data changes (debounced)
   useEffect(() => {
@@ -207,7 +242,7 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
         // The useEffect on currentAccount will re-fire
       }, disconnectWallet, updateData, refreshData,
       currentSummary, allSummaries, currentMonth,
-      saveToWalrus, isSaving, blobId,
+      saveToWalrus, isSaving, blobId, objectId, walrusNetwork, registerWalrusSnapshot,
     }}>
       {children}
     </FinixDataContext.Provider>

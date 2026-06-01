@@ -37,7 +37,7 @@ const incomeSources: Array<{ key: IncomeSource; label: string; icon: LucideIcon 
 ];
 
 export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProps) {
-  const { data, updateData } = useFinixData();
+  const { data, updateData, walletAddress, registerWalrusSnapshot } = useFinixData();
   const [step, setStep] = useState(1);
   const [type, setType] = useState<'expense' | 'income' | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -46,6 +46,7 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [isSaving, setIsSaving] = useState(false);
   const [successBlobId, setSuccessBlobId] = useState<string | null>(null);
+  const [successObjectId, setSuccessObjectId] = useState<string | null>(null);
   const [successNetwork, setSuccessNetwork] = useState<'mainnet' | 'testnet'>('mainnet');
 
   const reset = () => {
@@ -57,6 +58,7 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
     setDate(new Date().toISOString().split('T')[0]);
     setIsSaving(false);
     setSuccessBlobId(null);
+    setSuccessObjectId(null);
   };
 
   const handleClose = () => {
@@ -91,13 +93,16 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
       const res = await fetch('/api/walrus', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: updatedWithStreak }),
+        body: JSON.stringify({ data: updatedWithStreak, walletAddress }),
       });
       if (res.ok) {
         const result = await res.json();
         if (result.success && result.blobId) {
-          setSuccessBlobId(result.objectId || result.blobId);
-          setSuccessNetwork(result.network || 'testnet');
+          const network = result.network === 'testnet' ? 'testnet' : 'mainnet';
+          registerWalrusSnapshot({ blobId: result.blobId, objectId: result.objectId || null, network });
+          setSuccessBlobId(result.blobId);
+          setSuccessObjectId(result.objectId || null);
+          setSuccessNetwork(network);
           const label = result.network === 'mainnet' ? 'Sui Mainnet' : 'Sui Testnet';
           showToast('success', `Transaction saved to Walrus on ${label}`);
           setIsSaving(false);
@@ -109,7 +114,13 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
       const { walrusStoreHTTP } = await import('@/lib/walrus-http');
       const httpResult = await walrusStoreHTTP(updatedWithStreak);
       if (httpResult.blobId) {
-        setSuccessBlobId(httpResult.objectId || httpResult.blobId);
+        registerWalrusSnapshot({
+          blobId: httpResult.blobId,
+          objectId: httpResult.objectId,
+          network: httpResult.network,
+        });
+        setSuccessBlobId(httpResult.blobId);
+        setSuccessObjectId(httpResult.objectId || null);
         setSuccessNetwork(httpResult.network);
         const networkLabel = httpResult.network === 'mainnet' ? 'Sui Mainnet' : 'Sui Testnet';
         showToast('success', `Transaction saved to Walrus on ${networkLabel}`);
@@ -262,7 +273,7 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
             </div>
             <h3 className="text-lg font-semibold text-[#111827] mb-1">Transaction Saved!</h3>
             <p className="text-xs text-[#6B7280] mb-6">
-              Your data has been stored permanently on Walrus on Sui.
+              Your latest Finix data was saved to Walrus using the configured Sui network.
             </p>
             <div className="w-full bg-[#F9FAFB] rounded-[10px] px-4 py-2.5 mb-5 border border-[#E2E8F0]">
               <p className="text-2xs text-[#6B7280] mb-0.5">Blob ID</p>
@@ -277,11 +288,12 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
                 Close
               </Button>
               <Button
-                onClick={() => window.open(
-                `${successNetwork === 'testnet' ? 'https://suiscan.xyz/testnet/object' : 'https://suiscan.xyz/mainnet/object'}/${successBlobId}`,
-                '_blank',
-                'noopener,noreferrer'
-              )}
+                disabled={!successObjectId}
+                onClick={() => successObjectId && window.open(
+                  `${successNetwork === 'testnet' ? 'https://suiscan.xyz/testnet/object' : 'https://suiscan.xyz/mainnet/object'}/${successObjectId}`,
+                  '_blank',
+                  'noopener,noreferrer'
+                )}
                 className="flex-1"
               >
                 <ExternalLink size={14} />
