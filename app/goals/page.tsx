@@ -8,104 +8,98 @@ import { formatCurrency } from "@/lib/analytics";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { showToast } from "@/components/ui/Toast";
-import { Wallet, Plus, Target, Trash2, ArrowUpCircle } from "lucide-react";
+import { ArrowUpCircle, CheckCircle2, Plus, Target, Trash2, Wallet } from "lucide-react";
 import type { Goal } from "@/types/finix";
-
-const emojiSuggestions: Record<string, string> = {
-  ipad: '💻', iphone: '📱', laptop: '💻', macbook: '💻',
-  trip: '✈️', travel: '✈️', vacation: '✈️', bali: '✈️',
-  car: '🚗', motor: '🏍️',
-  house: '🏠', rent: '🏠', kos: '🏠',
-  emergency: '🛡️', fund: '💰',
-  invest: '📈', crypto: '₿',
-};
-
-function suggestEmoji(name: string): string {
-  const lower = name.toLowerCase();
-  for (const [key, emoji] of Object.entries(emojiSuggestions)) {
-    if (lower.includes(key)) return emoji;
-  }
-  return '🎯';
-}
 
 export default function GoalsPage() {
   const { data, updateData, currentSummary } = useFinixData();
   const { isConnected, connect, isConnecting, address } = useWallet();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [target, setTarget] = useState('');
-  const [emoji, setEmoji] = useState('🎯');
-
-  // Top-up state
+  const [name, setName] = useState("");
+  const [target, setTarget] = useState("");
   const [topUpGoal, setTopUpGoal] = useState<Goal | null>(null);
-  const [topUpAmount, setTopUpAmount] = useState('');
+  const [topUpAmount, setTopUpAmount] = useState("");
 
-  const activeGoals = data.goals.filter(g => !g.completedAt);
-  const completedGoals = data.goals.filter(g => g.completedAt);
-  const totalSaved = data.goals.reduce((s, g) => s + g.savedAmount, 0);
+  const activeGoals = data.goals.filter((g) => !g.completedAt);
+  const completedGoals = data.goals.filter((g) => g.completedAt);
+  const totalSaved = data.goals.reduce((sum, goal) => sum + goal.savedAmount, 0);
 
-  const handleAdd = async () => {
-    if (!name || !target) return;
+  const handleAdd = () => {
+    const targetAmount = parseFloat(target);
+    if (!name.trim() || Number.isNaN(targetAmount) || targetAmount <= 0) {
+      showToast("error", "Invalid goal", "Enter a goal name and a positive target amount");
+      return;
+    }
+
     const newGoal: Goal = {
       id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`,
-      name,
-      emoji,
-      targetAmount: parseFloat(target),
+      name: name.trim(),
+      emoji: "target",
+      targetAmount,
       savedAmount: 0,
-      currency: 'USD',
+      currency: "USD",
       createdAt: new Date().toISOString(),
     };
-    const updated = { ...data, goals: [...data.goals, newGoal] };
-    localStorage.setItem('finix_blob_mock', JSON.stringify(updated));
-    updateData(updated);
-    showToast('success', 'Goal created', emoji + ' ' + name);
+
+    updateData({ ...data, goals: [...data.goals, newGoal] });
+    showToast("success", "Goal created", newGoal.name);
     setIsModalOpen(false);
-    setName('');
-    setTarget('');
-    setEmoji('🎯');
+    setName("");
+    setTarget("");
   };
 
   const handleDelete = (id: string) => {
-    const updated = { ...data, goals: data.goals.filter(g => g.id !== id) };
-    localStorage.setItem('finix_blob_mock', JSON.stringify(updated));
-    updateData(updated);
-    showToast('success', 'Goal deleted');
-  };
-
-  const handleTopUp = (goal: Goal) => {
-    setTopUpGoal(goal);
-    setTopUpAmount('');
+    updateData({ ...data, goals: data.goals.filter((g) => g.id !== id) });
+    showToast("success", "Goal deleted");
   };
 
   const handleConfirmTopUp = () => {
-    if (!topUpGoal || !topUpAmount) return;
+    if (!topUpGoal) return;
     const amount = parseFloat(topUpAmount);
-    if (isNaN(amount) || amount <= 0) {
-      showToast('error', 'Invalid amount', 'Please enter a valid positive number');
+    if (Number.isNaN(amount) || amount <= 0) {
+      showToast("error", "Invalid amount", "Please enter a valid positive number");
       return;
     }
-    const newSavedAmount = topUpGoal.savedAmount + amount;
-    const completedAt = newSavedAmount >= topUpGoal.targetAmount ? new Date().toISOString() : undefined;
-    const updatedGoals = data.goals.map(g =>
-      g.id === topUpGoal.id
-        ? { ...g, savedAmount: newSavedAmount, ...(completedAt ? { completedAt } : {}) }
-        : g
-    );
-    const updated = { ...data, goals: updatedGoals };
-    localStorage.setItem('finix_blob_mock', JSON.stringify(updated));
-    updateData(updated);
-    showToast('success', 'Top up successful', `${formatCurrency(amount)} added to ${topUpGoal.name}`);
+
+    const updatedGoals = data.goals.map((goal) => {
+      if (goal.id !== topUpGoal.id) return goal;
+      const savedAmount = goal.savedAmount + amount;
+      return {
+        ...goal,
+        savedAmount,
+        ...(savedAmount >= goal.targetAmount ? { completedAt: new Date().toISOString() } : {}),
+      };
+    });
+
+    updateData({ ...data, goals: updatedGoals });
+    showToast("success", "Goal updated", `${formatCurrency(amount)} added to ${topUpGoal.name}`);
     setTopUpGoal(null);
-    setTopUpAmount('');
+    setTopUpAmount("");
   };
 
   if (!isConnected) {
     return (
       <AppShell title="Goals">
-        <div className="flex flex-col items-center justify-center py-24">
-          <Wallet size={48} className="text-[#C5D0FF] mb-4" />
-          <Button size="lg" onClick={connect} loading={isConnecting}><Wallet size={16} /> Connect Wallet</Button>
-        </div>
+        <section className="relative overflow-hidden rounded-[30px] border border-white/70 bg-[#0B1020] p-8 text-white shadow-[0_24px_70px_-48px_rgba(15,23,42,0.85)]">
+          <div className="pointer-events-none absolute right-0 top-0 h-56 w-56 rounded-full bg-[#4F6EF7]/30 blur-3xl" />
+          <div className="relative max-w-3xl">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-bold text-white/70">
+              <Target size={14} />
+              Goals workspace
+            </div>
+            <h2 className="text-3xl font-black leading-tight tracking-tight sm:text-5xl">Plan targets from real records.</h2>
+            <p className="mt-5 max-w-2xl text-sm leading-7 text-white/65 sm:text-base">Connect your wallet to create savings goals and track progress from your Finix data.</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <button
+                onClick={connect}
+                disabled={isConnecting}
+                className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-black text-[#111827] shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Wallet size={16} /> {isConnecting ? "Connecting..." : "Connect Wallet"}
+              </button>
+            </div>
+          </div>
+        </section>
       </AppShell>
     );
   }
@@ -113,53 +107,64 @@ export default function GoalsPage() {
   return (
     <AppShell
       title="Goals"
-      subtitle={`${activeGoals.length} Active · ${completedGoals.length} Completed · Saved ${formatCurrency(totalSaved)}`}
+      subtitle={`${activeGoals.length} active - ${completedGoals.length} completed - ${formatCurrency(totalSaved)} saved`}
       topbarExtra={
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[10px] bg-[#EEF2FF] border border-[#C5D0FF]">
-            <Wallet size={12} className="text-[#3B5BDB]" />
-            <span className="text-xs font-medium text-[#374151]">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5 rounded-full border border-[#C5D0FF] bg-[#EEF2FF] px-3 py-2">
+            <Wallet size={14} className="text-[#3B5BDB]" />
+            <span className="text-xs font-bold text-[#374151]">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
           </div>
-          <Button size="sm" onClick={() => setIsModalOpen(true)}>
-            <Plus size={13} /> New Goal
-          </Button>
+          <Button size="sm" onClick={() => setIsModalOpen(true)}><Plus size={13} /> New Goal</Button>
         </div>
       }
     >
-      {/* Active Goals */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        {activeGoals.map(g => {
-          const progress = g.targetAmount > 0 ? Math.min((g.savedAmount / g.targetAmount) * 100, 100) : 0;
-          const remaining = g.targetAmount - g.savedAmount;
-          const monthlyIncome = currentSummary.totalIncome * (currentSummary.savingRate / 100);
-          const eta = monthlyIncome > 0
-            ? Math.ceil(remaining / monthlyIncome)
-            : '∞';
+      <section className="mb-5 overflow-hidden rounded-[28px] border border-white/70 bg-[#0B1020] p-6 text-white shadow-[0_24px_70px_-48px_rgba(15,23,42,0.85)]">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-white/45">Savings system</p>
+            <h2 className="mt-2 text-3xl font-black sm:text-4xl">{formatCurrency(totalSaved)}</h2>
+            <p className="mt-3 max-w-xl text-sm leading-7 text-white/65">Set concrete targets, top them up manually, and let achievements unlock from your real progress.</p>
+          </div>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-black text-[#111827] shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#F8FAFC]"
+          >
+            <Plus size={16} /> Create Goal
+          </button>
+        </div>
+      </section>
+
+      <div className="mb-6 grid gap-4 md:grid-cols-2">
+        {activeGoals.map((goal) => {
+          const progress = goal.targetAmount > 0 ? Math.min((goal.savedAmount / goal.targetAmount) * 100, 100) : 0;
+          const remaining = Math.max(0, goal.targetAmount - goal.savedAmount);
+          const monthlySavings = currentSummary.totalIncome * (currentSummary.savingRate / 100);
+          const eta = monthlySavings > 0 ? `${Math.ceil(remaining / monthlySavings)} months` : "Add savings data";
+
           return (
-            <div key={g.id} className="bg-white border border-[#E2E8F0] rounded-[12px] p-[18px] group">
-              <div className="flex items-start justify-between mb-3">
+            <div key={goal.id} className="group rounded-[24px] border border-white/70 bg-white p-5 shadow-[0_18px_55px_-48px_rgba(15,23,42,0.75)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#C7D2FE]">
+              <div className="mb-4 flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <span className="text-3xl">{g.emoji}</span>
+                  <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EEF2FF] text-[#3B5BDB]">
+                    <Target size={22} />
+                  </span>
                   <div>
-                    <h3 className="text-sm font-semibold text-[#111827]">{g.name}</h3>
-                    <p className="text-xs text-[#6B7280]">Saved {formatCurrency(g.savedAmount)} of {formatCurrency(g.targetAmount)}</p>
+                    <h3 className="text-base font-black text-[#111827]">{goal.name}</h3>
+                    <p className="text-xs leading-5 text-[#64748B]">Saved {formatCurrency(goal.savedAmount)} of {formatCurrency(goal.targetAmount)}</p>
                   </div>
                 </div>
-                <button onClick={() => handleDelete(g.id)} className="p-1.5 rounded-[6px] text-[#9CA3AF] hover:text-[#B91C1C] opacity-0 group-hover:opacity-100 transition-all">
-                  <Trash2 size={13} />
+                <button onClick={() => handleDelete(goal.id)} className="rounded-xl p-2 text-[#94A3B8] opacity-0 transition-all duration-200 hover:bg-[#FEF2F2] hover:text-[#B91C1C] group-hover:opacity-100">
+                  <Trash2 size={15} />
                 </button>
               </div>
-              <div className="h-3 rounded-full bg-[#EEF2FF] mb-2">
-                <div
-                  className="h-3 rounded-full bg-gradient-to-r from-[#3B5BDB] to-[#4F6EF7] transition-all duration-700 ease-out"
-                  style={{ width: `${progress}%` }}
-                />
+              <div className="mb-2 h-3 overflow-hidden rounded-full bg-[#EEF2FF]">
+                <div className="h-full rounded-full bg-gradient-to-r from-[#3B5BDB] to-[#8FE5C0] transition-all duration-700" style={{ width: `${progress}%` }} />
               </div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold text-[#3B5BDB]">{progress.toFixed(0)}%</span>
-                <span className="text-2xs text-[#9CA3AF]">ETA: ~{eta} months</span>
+              <div className="mb-4 flex items-center justify-between text-xs font-bold">
+                <span className="text-[#3B5BDB]">{progress.toFixed(0)}%</span>
+                <span className="text-[#94A3B8]">ETA: {eta}</span>
               </div>
-              <Button size="sm" variant="secondary" onClick={() => handleTopUp(g)} className="w-full">
+              <Button size="sm" variant="secondary" onClick={() => setTopUpGoal(goal)} className="w-full">
                 <ArrowUpCircle size={12} /> Top Up
               </Button>
             </div>
@@ -167,19 +172,18 @@ export default function GoalsPage() {
         })}
       </div>
 
-      {/* Completed Section */}
       {completedGoals.length > 0 && (
-        <div>
-          <h3 className="text-sm font-semibold text-[#111827] mb-3">Completed</h3>
-          <div className="bg-white border border-[#E2E8F0] rounded-[12px] divide-y divide-[#E2E8F0]">
-            {completedGoals.map(g => (
-              <div key={g.id} className="flex items-center gap-3 px-4 py-3">
-                <span className="text-xl">{g.emoji}</span>
+        <div className="mb-6 rounded-[24px] border border-[#E2E8F0] bg-white p-5 shadow-[0_18px_55px_-48px_rgba(15,23,42,0.75)]">
+          <h3 className="mb-3 text-base font-black text-[#111827]">Completed Goals</h3>
+          <div className="divide-y divide-[#E2E8F0]">
+            {completedGoals.map((goal) => (
+              <div key={goal.id} className="flex items-center gap-3 py-3">
+                <CheckCircle2 size={18} className="text-[#15803D]" />
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-[#111827]">{g.name} ✅</p>
-                  <p className="text-2xs text-[#9CA3AF]">Completed {g.completedAt}</p>
+                  <p className="text-sm font-bold text-[#111827]">{goal.name}</p>
+                  <p className="text-xs text-[#94A3B8]">Completed {goal.completedAt ? new Date(goal.completedAt).toLocaleDateString() : ""}</p>
                 </div>
-                <span className="text-xs font-medium text-[#15803D]">{formatCurrency(g.targetAmount)}</span>
+                <span className="text-sm font-black text-[#15803D]">{formatCurrency(goal.targetAmount)}</span>
               </div>
             ))}
           </div>
@@ -187,140 +191,40 @@ export default function GoalsPage() {
       )}
 
       {activeGoals.length === 0 && completedGoals.length === 0 && (
-        <div className="text-center py-16">
-          <Target size={48} className="mx-auto text-[#C5D0FF] mb-4" />
-          <h3 className="text-md font-semibold text-[#111827] mb-2">No goals yet</h3>
-          <p className="text-xs text-[#6B7280] mb-4">Create your first savings goal</p>
-          <Button onClick={() => setIsModalOpen(true)}><Plus size={14} /> New Goal</Button>
+        <div className="rounded-[28px] border border-dashed border-[#C7D2FE] bg-white px-6 py-16 text-center shadow-[0_18px_55px_-48px_rgba(15,23,42,0.75)]">
+          <Target size={42} className="mx-auto mb-4 text-[#3B5BDB]" />
+          <h3 className="text-lg font-black text-[#111827]">No goals yet</h3>
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#64748B]">Create your first target and track progress from your own financial records.</p>
+          <Button onClick={() => setIsModalOpen(true)} className="mt-5"><Plus size={14} /> New Goal</Button>
         </div>
       )}
 
-      {/* Add Goal Modal */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="New Goal">
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-medium text-[#6B7280] mb-1.5 block">Goal Name</label>
-            <input
-              type="text"
-              placeholder="e.g. iPad Pro"
-              value={name}
-              onChange={(e) => { setName(e.target.value); setEmoji(suggestEmoji(e.target.value)); }}
-              className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-[10px] focus:outline-none focus:border-[#3B5BDB]"
-            />
+            <label className="mb-1.5 block text-xs font-bold text-[#64748B]">Goal Name</label>
+            <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Emergency fund" className="w-full rounded-[12px] border border-[#E2E8F0] px-3 py-2 text-sm focus:border-[#3B5BDB] focus:outline-none" />
           </div>
           <div>
-            <label className="text-xs font-medium text-[#6B7280] mb-1.5 block">Emoji</label>
-            <input
-              type="text"
-              value={emoji}
-              onChange={(e) => setEmoji(e.target.value)}
-              className="w-[80px] px-3 py-2 text-xl border border-[#E2E8F0] rounded-[10px] focus:outline-none focus:border-[#3B5BDB] text-center"
-              maxLength={2}
-            />
-            <p className="text-2xs text-[#9CA3AF] mt-1">Auto-suggested based on name</p>
+            <label className="mb-1.5 block text-xs font-bold text-[#64748B]">Target Amount (USD)</label>
+            <input type="number" min="0" step="0.01" value={target} onChange={(event) => setTarget(event.target.value)} placeholder="1200" className="w-full rounded-[12px] border border-[#E2E8F0] px-3 py-2 text-sm focus:border-[#3B5BDB] focus:outline-none" />
           </div>
-          <div>
-            <label className="text-xs font-medium text-[#6B7280] mb-1.5 block">Target Amount (USD)</label>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="1200"
-              value={target}
-              onChange={(e) => setTarget(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-[10px] focus:outline-none focus:border-[#3B5BDB]"
-            />
-          </div>
-          <Button onClick={handleAdd} disabled={!name || !target} className="w-full">
-            <Target size={14} /> Create Goal
-          </Button>
+          <Button onClick={handleAdd} disabled={!name || !target} className="w-full"><Target size={14} /> Create Goal</Button>
         </div>
       </Modal>
 
-      {/* Top Up Modal */}
-      <Modal isOpen={!!topUpGoal} onClose={() => { setTopUpGoal(null); setTopUpAmount(''); }} title="Top Up">
+      <Modal isOpen={!!topUpGoal} onClose={() => { setTopUpGoal(null); setTopUpAmount(""); }} title="Top Up" size="sm">
         {topUpGoal && (
           <div className="space-y-5">
-            {/* Goal info header */}
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">{topUpGoal.emoji}</span>
-              <div>
-                <h3 className="text-base font-semibold text-[#111827]">{topUpGoal.name}</h3>
-                <p className="text-xs text-[#6B7280]">{formatCurrency(topUpGoal.savedAmount)} of {formatCurrency(topUpGoal.targetAmount)}</p>
-              </div>
+            <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
+              <h3 className="text-base font-black text-[#111827]">{topUpGoal.name}</h3>
+              <p className="mt-1 text-xs text-[#64748B]">{formatCurrency(topUpGoal.savedAmount)} of {formatCurrency(topUpGoal.targetAmount)}</p>
             </div>
-
-            {/* Animated progress bar */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-medium text-[#6B7280]">Progress</span>
-                <span className="text-xs font-semibold text-[#3B5BDB]">
-                  {topUpGoal.targetAmount > 0
-                    ? Math.min((topUpGoal.savedAmount / topUpGoal.targetAmount) * 100, 100).toFixed(0)
-                    : 0}%
-                </span>
-              </div>
-              <div className="h-4 rounded-full bg-[#EEF2FF] overflow-hidden">
-                <div
-                  className="h-4 rounded-full bg-gradient-to-r from-[#3B5BDB] to-[#4F6EF7] transition-all duration-700 ease-out"
-                  style={{
-                    width: `${
-                      topUpGoal.targetAmount > 0
-                        ? Math.min((topUpGoal.savedAmount / topUpGoal.targetAmount) * 100, 100)
-                        : 0
-                    }%`,
-                  }}
-                />
-              </div>
+              <label className="mb-1.5 block text-xs font-bold text-[#64748B]">Amount to Add (USD)</label>
+              <input type="number" min="0.01" step="0.01" value={topUpAmount} onChange={(event) => setTopUpAmount(event.target.value)} placeholder="50" className="w-full rounded-[12px] border border-[#E2E8F0] px-3 py-2.5 text-base focus:border-[#3B5BDB] focus:outline-none" autoFocus />
             </div>
-
-            {/* Amount breakdown */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-[#F9FAFB] border border-[#E2E8F0] rounded-[10px] p-3 text-center">
-                <p className="text-2xs text-[#6B7280] mb-0.5">Saved</p>
-                <p className="text-base font-bold text-[#111827]">{formatCurrency(topUpGoal.savedAmount)}</p>
-              </div>
-              <div className="bg-[#F9FAFB] border border-[#E2E8F0] rounded-[10px] p-3 text-center">
-                <p className="text-2xs text-[#6B7280] mb-0.5">Target</p>
-                <p className="text-base font-bold text-[#111827]">{formatCurrency(topUpGoal.targetAmount)}</p>
-              </div>
-            </div>
-
-            {/* Remaining */}
-            <div className="text-center">
-              <p className="text-xs text-[#6B7280]">
-                Remaining: <span className="font-semibold text-[#111827]">{formatCurrency(Math.max(0, topUpGoal.targetAmount - topUpGoal.savedAmount))}</span>
-              </p>
-            </div>
-
-            {/* Amount input */}
-            <div>
-              <label className="text-xs font-medium text-[#6B7280] mb-1.5 block">Amount to Add (USD)</label>
-              <input
-                type="number"
-                min="0.01"
-                step="0.01"
-                placeholder="e.g. 50"
-                value={topUpAmount}
-                onChange={(e) => setTopUpAmount(e.target.value)}
-                className="w-full px-3 py-2.5 text-base border border-[#E2E8F0] rounded-[10px] focus:outline-none focus:border-[#3B5BDB]"
-                autoFocus
-              />
-              {topUpAmount && parseFloat(topUpAmount) > 0 && (
-                <p className="text-2xs text-[#6B7280] mt-1">
-                  New total: <span className="font-medium text-[#111827]">{formatCurrency(topUpGoal.savedAmount + parseFloat(topUpAmount))}</span>
-                  {topUpGoal.savedAmount + parseFloat(topUpAmount) >= topUpGoal.targetAmount && (
-                    <span className="ml-1 text-[#15803D]">🎉 Goal complete!</span>
-                  )}
-                </p>
-              )}
-            </div>
-
-            <Button
-              onClick={handleConfirmTopUp}
-              disabled={!topUpAmount || parseFloat(topUpAmount) <= 0}
-              className="w-full"
-            >
+            <Button onClick={handleConfirmTopUp} disabled={!topUpAmount || parseFloat(topUpAmount) <= 0} className="w-full">
               <ArrowUpCircle size={14} /> Confirm Top Up
             </Button>
           </div>

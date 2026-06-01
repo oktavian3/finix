@@ -1,6 +1,7 @@
 "use client";
 
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
+import { TrendingDown, TrendingUp } from "lucide-react";
 
 interface SavingRateRingProps {
   savingRate: number;
@@ -8,48 +9,50 @@ interface SavingRateRingProps {
 }
 
 export function SavingRateRing({ savingRate, vsLastMonth }: SavingRateRingProps) {
+  const clampedRate = Math.max(0, Math.min(100, savingRate));
   const data = [
-    { name: 'Saved', value: savingRate },
-    { name: 'Spent', value: 100 - savingRate },
+    { name: "Saved", value: clampedRate },
+    { name: "Spent", value: 100 - clampedRate },
   ];
 
-  const COLORS = ['#4F6EF7', '#EEF2FF'];
-
   return (
-    <div className="bg-white border border-[#E2E8F0] rounded-[12px] p-[18px]">
-      <h3 className="text-base font-semibold text-[#111827] mb-4">Saving Rate</h3>
-      <div className="flex items-center gap-4">
-        <div className="relative h-[140px] w-[140px]">
+    <div className="rounded-[26px] border border-[#E2E8F0] bg-white p-5 shadow-[0_18px_55px_-45px_rgba(15,23,42,0.65)] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#C7D2FE]">
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#94A3B8]">Savings Health</p>
+          <h3 className="mt-1 text-lg font-black text-[#111827]">Saving Rate</h3>
+        </div>
+        {vsLastMonth !== undefined && (
+          <div className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${vsLastMonth >= 0 ? "bg-[#ECFDF5] text-[#047857]" : "bg-[#FEF2F2] text-[#B91C1C]"}`}>
+            {vsLastMonth >= 0 ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
+            {Math.abs(vsLastMonth)}%
+          </div>
+        )}
+      </div>
+
+      <div className="grid items-center gap-5 sm:grid-cols-[160px_1fr] xl:grid-cols-1 2xl:grid-cols-[160px_1fr]">
+        <div className="relative mx-auto h-[160px] w-[160px]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={38}
-                outerRadius={60}
-                startAngle={90}
-                endAngle={-270}
-                dataKey="value"
-                stroke="none"
-              >
-                {data.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index]} />
-                ))}
+              <Pie data={data} cx="50%" cy="50%" innerRadius={52} outerRadius={72} startAngle={90} endAngle={-270} dataKey="value" stroke="none">
+                <Cell fill="#3B5BDB" />
+                <Cell fill="#EEF2FF" />
               </Pie>
             </PieChart>
           </ResponsiveContainer>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-2xl font-bold text-[#3B5BDB]">{savingRate}%</span>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-3xl font-black text-[#111827]">{savingRate}%</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#94A3B8]">saved</span>
           </div>
         </div>
-        <div className="flex-1">
-          <p className="text-xs text-[#6B7280]">You save {savingRate}% of your income</p>
-          {vsLastMonth !== undefined && (
-            <p className={`text-xs mt-1 ${vsLastMonth >= 0 ? 'text-[#15803D]' : 'text-[#B91C1C]'}`}>
-              {vsLastMonth >= 0 ? '↑' : '↓'} {Math.abs(vsLastMonth)}% vs last month
-            </p>
-          )}
+
+        <div>
+          <p className="text-sm leading-7 text-[#64748B]">
+            You are saving {savingRate}% of income in this period. The ring keeps the target visible without hiding the trend context.
+          </p>
+          <div className="mt-5 h-2 rounded-full bg-[#EEF2FF]">
+            <div className="h-2 rounded-full bg-gradient-to-r from-[#3B5BDB] to-[#22C55E] transition-all duration-700" style={{ width: `${clampedRate}%` }} />
+          </div>
         </div>
       </div>
     </div>
