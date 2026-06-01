@@ -186,23 +186,23 @@ export default function AiAdvisorPage() {
           </div>
         </section>
 
-        {/* Data Summary Cards */}
+        {/* Data Summary Cards — income, expenses, saving rate, goals */}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-[22px] border border-white/70 bg-gradient-to-br from-[#ECFDF5] to-white p-5 shadow-[0_18px_55px_-45px_rgba(15,23,42,0.65)]">
+          <div className="rounded-[22px] border border-[#E2E8F0] bg-white p-5 shadow-[0_18px_55px_-45px_rgba(15,23,42,0.65)]">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp size={14} className="text-[#15803D]" />
               <span className="text-2xs font-semibold text-[#6B7280] uppercase tracking-wider">Income</span>
             </div>
             <p className="text-lg font-bold text-[#111827]">{formatCurrency(currentSummary.totalIncome)}</p>
           </div>
-          <div className="rounded-[22px] border border-white/70 bg-gradient-to-br from-[#FFF7ED] to-white p-5 shadow-[0_18px_55px_-45px_rgba(15,23,42,0.65)]">
+          <div className="rounded-[22px] border border-[#E2E8F0] bg-white p-5 shadow-[0_18px_55px_-45px_rgba(15,23,42,0.65)]">
             <div className="flex items-center gap-2 mb-2">
               <AlertTriangle size={14} className="text-[#B91C1C]" />
               <span className="text-2xs font-semibold text-[#6B7280] uppercase tracking-wider">Expenses</span>
             </div>
             <p className="text-lg font-bold text-[#111827]">{formatCurrency(currentSummary.totalExpense)}</p>
           </div>
-          <div className="rounded-[22px] border border-white/70 bg-gradient-to-br from-[#EEF2FF] to-white p-5 shadow-[0_18px_55px_-45px_rgba(15,23,42,0.65)]">
+          <div className="rounded-[22px] border border-[#E2E8F0] bg-white p-5 shadow-[0_18px_55px_-45px_rgba(15,23,42,0.65)]">
             <div className="flex items-center gap-2 mb-2">
               <PiggyBank size={14} className="text-[#3B5BDB]" />
               <span className="text-2xs font-semibold text-[#6B7280] uppercase tracking-wider">Saving Rate</span>
@@ -211,7 +211,7 @@ export default function AiAdvisorPage() {
               {currentSummary.savingRate}%
             </p>
           </div>
-          <div className="rounded-[22px] border border-white/70 bg-gradient-to-br from-[#F8FAFC] to-white p-5 shadow-[0_18px_55px_-45px_rgba(15,23,42,0.65)]">
+          <div className="rounded-[22px] border border-[#E2E8F0] bg-white p-5 shadow-[0_18px_55px_-45px_rgba(15,23,42,0.65)]">
             <div className="flex items-center gap-2 mb-2">
               <Target size={14} className="text-[#6D28D9]" />
               <span className="text-2xs font-semibold text-[#6B7280] uppercase tracking-wider">Goals</span>
@@ -224,7 +224,7 @@ export default function AiAdvisorPage() {
 
         {/* Category & Source mini-table */}
         <div className="grid gap-4 xl:grid-cols-2">
-          <div className="rounded-[22px] border border-[#E2E8F0] bg-white p-5 shadow-[0_18px_55px_-48px_rgba(15,23,42,0.75)]">
+          <div className="rounded-[22px] border border-[#E2E8F0] bg-white p-5 shadow-[0_18px_55px_-45px_rgba(15,23,42,0.65)]">
             <h4 className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-3">Top Expenses</h4>
             <div className="space-y-2">
               {topCategory.length === 0 && <p className="text-xs leading-5 text-[#64748B]">No expense records yet.</p>}
@@ -236,7 +236,7 @@ export default function AiAdvisorPage() {
               ))}
             </div>
           </div>
-          <div className="rounded-[22px] border border-[#E2E8F0] bg-white p-5 shadow-[0_18px_55px_-48px_rgba(15,23,42,0.75)]">
+          <div className="rounded-[22px] border border-[#E2E8F0] bg-white p-5 shadow-[0_18px_55px_-45px_rgba(15,23,42,0.65)]">
             <h4 className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-3">Top Income Sources</h4>
             <div className="space-y-2">
               {topSource.length === 0 && <p className="text-xs leading-5 text-[#64748B]">No income records yet.</p>}
@@ -251,7 +251,7 @@ export default function AiAdvisorPage() {
         </div>
 
         {/* AI Analysis */}
-        <div className="overflow-hidden rounded-[24px] border border-[#E2E8F0] bg-white shadow-[0_18px_55px_-48px_rgba(15,23,42,0.75)]">
+        <div className="overflow-hidden rounded-[24px] border border-[#E2E8F0] bg-white shadow-[0_18px_55px_-45px_rgba(15,23,42,0.65)]">
           <div className="flex items-center justify-between px-5 py-3 border-b border-[#E2E8F0] bg-[#FAFBFC]">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#3B5BDB] to-[#6D28D9] flex items-center justify-center">
@@ -328,15 +328,19 @@ export default function AiAdvisorPage() {
           </div>
         </div>
 
-        {/* Bottom info */}
-        <div className="bg-gradient-to-br from-[#3B5BDB] to-[#6D28D9] rounded-[12px] p-4 text-white flex items-start gap-3">
-          <Bot size={18} className="shrink-0 mt-0.5" />
-          <div>
-            <p className="text-xs font-semibold mb-1">How Your Data Is Used</p>
-            <p className="text-xs leading-5 opacity-90">
-              We analyze your financial habits to give you personalized insights. Your raw transactions are not sent to the AI service.
-              Only aggregated data (monthly summaries, categories, goals) is used for AI analysis.
-            </p>
+        {/* Bottom info — how data is used */}
+        <div className="rounded-[22px] border border-[#E2E8F0] bg-white p-5 shadow-[0_18px_55px_-45px_rgba(15,23,42,0.65)]">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#EEF2FF] to-[#EAFBF6] text-[#111827]">
+              <Bot size={18} />
+            </div>
+            <div>
+              <p className="text-sm font-black text-[#111827] mb-1">How Your Data Is Used</p>
+              <p className="text-xs leading-6 text-[#64748B]">
+                We analyze your financial habits to give you personalized insights. Your raw transactions are not sent to the AI service.
+                Only aggregated data (monthly summaries, categories, goals) is used for AI analysis.
+              </p>
+            </div>
           </div>
         </div>
       </div>
