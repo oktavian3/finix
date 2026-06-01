@@ -138,7 +138,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         <DappKitWalletProvider
           autoConnect={false}
           slushWallet={{ name: 'Slush' }}
-          storage={null}
         >
           <WalletInner>
             {children}
