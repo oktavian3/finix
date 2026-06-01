@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useCallback, useState, useEffect, ReactNode, useRef } from 'react';
+import { createContext, useContext, useCallback, useState, useEffect, ReactNode } from 'react';
 import {
   SuiClientProvider,
   WalletProvider as DappKitWalletProvider,
@@ -12,16 +12,34 @@ import {
   createNetworkConfig,
 } from '@mysten/dapp-kit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { getJsonRpcFullnodeUrl } from '@mysten/sui/jsonRpc';
+import { getJsonRpcFullnodeUrl, SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
 
-// ─── Network config ───────────────────────────────────────────
+// Testnet-first wallet config. This matches the previously working hackathon flow.
+const TATUM_RPC_URL = process.env.NEXT_PUBLIC_TATUM_RPC_URL || 'https://sui-testnet.gateway.tatum.io';
+const TATUM_API_KEY = process.env.NEXT_PUBLIC_TATUM_API_KEY || '';
+const SUI_NETWORK = process.env.NEXT_PUBLIC_SUI_NETWORK || 'testnet';
+
 const { networkConfig } = createNetworkConfig({
-  mainnet: { url: getJsonRpcFullnodeUrl('mainnet'), network: 'mainnet' },
-  testnet: { url: getJsonRpcFullnodeUrl('testnet'), network: 'testnet' },
+  mainnet: { url: process.env.NEXT_PUBLIC_TATUM_MAINNET_RPC_URL || 'https://sui-mainnet.gateway.tatum.io', network: 'mainnet' },
+  testnet: { url: TATUM_RPC_URL || getJsonRpcFullnodeUrl('testnet'), network: 'testnet' },
   devnet: { url: getJsonRpcFullnodeUrl('devnet'), network: 'devnet' },
 });
 
 const queryClient = new QueryClient();
+
+function createTatumSuiClient(_name: string, config: any) {
+  return new SuiJsonRpcClient({
+    ...config,
+    fetch: (input: RequestInfo | URL, init?: RequestInit): Promise<Response> =>
+      fetch(input, {
+        ...init,
+        headers: {
+          ...init?.headers,
+          ...(TATUM_API_KEY ? { 'x-api-key': TATUM_API_KEY } : {}),
+        },
+      }),
+  });
+}
 
 // ─── Context untuk backward compat ────────────────────────────
 interface WalletContextType {
@@ -51,7 +69,6 @@ function WalletInner({ children }: { children: ReactNode }) {
   const wallets = useWallets();
   const [isInstalled, setIsInstalled] = useState(false);
   const [signAndExecuteTransaction, setSignAndExecute] = useState<WalletContextType['signAndExecuteTransaction']>(null);
-  const connectLock = useRef(false);
 
   // Detect if any Sui wallet is installed
   useEffect(() => {
@@ -68,23 +85,6 @@ function WalletInner({ children }: { children: ReactNode }) {
       setSignAndExecute(null);
     }
   }, [currentWallet]);
-
-  // Auto-connect when there's exactly 1 wallet (Slush) — dapp-kit autoConnect handles persistence
-  // Fallback: if wallet detected but not connected, try connecting
-  useEffect(() => {
-    if (isInstalled && !currentAccount && connectionStatus === 'disconnected' && !connectLock.current) {
-      // try to auto-connect to the first available wallet
-      const target = wallets[0];
-      if (target) {
-        connectLock.current = true;
-        doConnect({ wallet: target as any }).catch(() => {
-          // silent — user will click Connect button
-        }).finally(() => {
-          connectLock.current = false;
-        });
-      }
-    }
-  }, [isInstalled, currentAccount, connectionStatus, wallets, doConnect]);
 
   const connect = useCallback(async () => {
     if (wallets.length === 0) {
@@ -130,9 +130,13 @@ function WalletInner({ children }: { children: ReactNode }) {
 export function WalletProvider({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <SuiClientProvider networks={networkConfig} defaultNetwork="mainnet">
+      <SuiClientProvider
+        networks={networkConfig}
+        defaultNetwork={SUI_NETWORK as keyof typeof networkConfig & string}
+        createClient={createTatumSuiClient}
+      >
         <DappKitWalletProvider
-          autoConnect={true}
+          autoConnect={false}
           slushWallet={{ name: 'Slush' }}
         >
           <WalletInner>

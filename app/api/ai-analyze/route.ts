@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
 interface FinancialData {
   totalIncome: number;
@@ -15,7 +15,6 @@ interface FinancialData {
 
 interface GoalData {
   name: string;
-  emoji: string;
   targetAmount: number;
   savedAmount: number;
   progress: number;
@@ -32,31 +31,30 @@ export async function POST(request: NextRequest) {
 
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: 'DeepSeek API key not configured' }, { status: 500 });
+      return NextResponse.json({ error: "AI service is not configured" }, { status: 500 });
     }
 
     const prompt = buildAnalysisPrompt(financialSummary, goals, trendData);
 
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-      method: 'POST',
+    const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'deepseek-chat',
+        model: "deepseek-chat",
         messages: [
           {
-            role: 'system',
-            content: `Kamu adalah AI financial advisor dari Finix — aplikasi personal finance tracker berbasis Web3. 
-Tugasmu: menganalisis data keuangan user dan memberikan insight actionable yang jelas, praktis, dan to the point.
-Gunakan bahasa Indonesia kasual (lo/gue) — santai tapi tetap informatif. Respons maksimal 5 paragraf pendek.
-Fokus pada: pola pengeluaran, saving rate, goal progress, dan rekomendasi konkret.
-JANGAN pernah meminta informasi tambahan dari user. Kerjakan dari data yang ada.
-JANGAN menjawab pertanyaan apapun — kamu hanya memberikan analysis dari data.`,
+            role: "system",
+            content: `You are Finix AI Advisor, a financial insights assistant for a global personal finance app built on Sui.
+Analyze the provided financial summary and return clear, practical, concise insights in English.
+Focus on spending patterns, saving rate, goal progress, risks, and concrete next steps.
+Do not ask for more information. Work only from the provided data.
+Do not make guarantees or investment advice. Keep the response under 5 short paragraphs.`,
           },
           {
-            role: 'user',
+            role: "user",
             content: prompt,
           },
         ],
@@ -67,20 +65,17 @@ JANGAN menjawab pertanyaan apapun — kamu hanya memberikan analysis dari data.`
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error('DeepSeek API error:', response.status, errText);
-      return NextResponse.json({ error: 'AI service unavailable' }, { status: 502 });
+      console.error("DeepSeek API error:", response.status, errText);
+      return NextResponse.json({ error: "AI service unavailable" }, { status: 502 });
     }
 
     const result = await response.json();
-    const analysis = result.choices?.[0]?.message?.content || 'Maaf, analysis gagal digenerate.';
+    const analysis = result.choices?.[0]?.message?.content || "Analysis could not be generated.";
 
     return NextResponse.json({ analysis });
   } catch (error) {
-    console.error('AI analysis error:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate analysis' },
-      { status: 500 }
-    );
+    console.error("AI analysis error:", error);
+    return NextResponse.json({ error: "Failed to generate analysis" }, { status: 500 });
   }
 }
 
@@ -92,42 +87,42 @@ function buildAnalysisPrompt(
   const catLines = Object.entries(summary.byCategory || {})
     .sort(([, a], [, b]) => b - a)
     .map(([cat, amt]) => `  - ${cat}: $${amt.toFixed(2)}`)
-    .join('\n');
+    .join("\n");
 
   const srcLines = Object.entries(summary.bySource || {})
     .sort(([, a], [, b]) => b - a)
     .map(([src, amt]) => `  - ${src}: $${amt.toFixed(2)}`)
-    .join('\n');
+    .join("\n");
 
   const goalLines = (goals || [])
-    .map(g => `  - ${g.emoji} ${g.name}: $${g.savedAmount} / $${g.targetAmount} (${g.progress}%)`)
-    .join('\n');
+    .map((g) => `  - ${g.name}: $${g.savedAmount} / $${g.targetAmount} (${g.progress}%)`)
+    .join("\n");
 
   const trendLines = (trendData || [])
-    .map(t => `  - ${t.month}: income=$${t.income.toFixed(0)}, expense=$${t.expense.toFixed(0)}`)
-    .join('\n');
+    .map((t) => `  - ${t.month}: income=$${t.income.toFixed(0)}, expense=$${t.expense.toFixed(0)}`)
+    .join("\n");
 
   return `Provide a financial analysis in English based on this data:
 
 === CURRENT MONTH SUMMARY ===
-- Total Income: $${summary.totalIncome?.toFixed(2) || '0'}
-- Total Expense: $${summary.totalExpense?.toFixed(2) || '0'}
-- Net Balance: $${summary.netBalance?.toFixed(2) || '0'}
+- Total Income: $${summary.totalIncome?.toFixed(2) || "0"}
+- Total Expense: $${summary.totalExpense?.toFixed(2) || "0"}
+- Net Balance: $${summary.netBalance?.toFixed(2) || "0"}
 - Saving Rate: ${summary.savingRate || 0}%
-- Top Category: ${summary.topCategory || 'N/A'} ($${summary.topCategoryAmount?.toFixed(2) || '0'})
-- Top Source: ${summary.topSource || 'N/A'} ($${summary.topSourceAmount?.toFixed(2) || '0'})
+- Top Category: ${summary.topCategory || "N/A"} ($${summary.topCategoryAmount?.toFixed(2) || "0"})
+- Top Source: ${summary.topSource || "N/A"} ($${summary.topSourceAmount?.toFixed(2) || "0"})
 
 === EXPENSES BY CATEGORY ===
-${catLines || '  (no data)'}
+${catLines || "  (no data)"}
 
 === INCOME BY SOURCE ===
-${srcLines || '  (no data)'}
+${srcLines || "  (no data)"}
 
 === GOALS ===
-${goalLines || '  (no goals yet)'}
+${goalLines || "  (no goals yet)"}
 
 === 6-MONTH TREND ===
-${trendLines || '  (no trend data)'}
+${trendLines || "  (no trend data)"}
 
-Provide actionable insights and recommendations in English. Keep it concise and direct. Format with short paragraphs and bullet points where appropriate.`;
+Provide actionable insights in English. Keep it concise, direct, and production-safe. Format with short paragraphs and bullet points where appropriate.`;
 }

@@ -1,29 +1,21 @@
 /**
- * Walrus SDK — server-side blob storage on Walrus testnet.
- * Uses WalrusClient + Ed25519Keypair for proper certified blobs (deletable: false).
- * WASM loaded from @mysten/walrus-wasm package (external in webpack).
+ * Walrus SDK - server-side blob storage on Walrus testnet.
+ * This restores the previously working testnet flow while the UI remains updated.
  *
- * Vercel env: SUI_PRIVATE_KEY (suiprivkey format)
- * Network: testnet (Walrus testnet + Sui testnet RPC)
- *
- * Why testnet:
- * - publisher.walrus.space (mainnet) NXDOMAIN from most networks
- * - WAL token only available on testnet for gasless HTTP Publisher
- * - WalrusClient + signing works on both mainnet and testnet
- * - Sui testnet explorer: suiscan.xyz/testnet
+ * Required env: SUI_PRIVATE_KEY (suiprivkey format)
  */
 import { WalrusClient } from '@mysten/walrus';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
 
-const DEFAULT_TESTNET_RPC = 'https://fullnode.testnet.sui.io:443';
-
+const TESTNET_RPC = process.env.NEXT_PUBLIC_TATUM_RPC_URL || 'https://sui-testnet.gateway.tatum.io';
+const TATUM_API_KEY = process.env.NEXT_PUBLIC_TATUM_API_KEY || '';
 const AGGREGATOR_URL = 'https://aggregator.walrus-testnet.walrus.space';
 
 interface WalrusStoreResult {
   blobId: string;
   objectId: string | null;
-  network: 'mainnet' | 'testnet';
+  network: 'testnet';
 }
 
 let _client: WalrusClient | null = null;
@@ -36,14 +28,22 @@ function getKeypair(): Ed25519Keypair {
 
 function getClient(): WalrusClient {
   if (!_client) {
-    // WalrusClient needs raw Sui RPC (no custom headers)
-    // Tatum RPC is used for frontend wallet connections via config.ts
-    const rpcUrl = DEFAULT_TESTNET_RPC;
-
     _client = new WalrusClient({
       network: 'testnet',
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      suiClient: new SuiJsonRpcClient({ url: rpcUrl, network: 'testnet' } as any),
+      suiClient: new SuiJsonRpcClient({
+        url: TESTNET_RPC,
+        network: 'testnet',
+        fetch: (input: RequestInfo | URL, init?: RequestInit): Promise<Response> =>
+          fetch(input, {
+            ...init,
+            headers: {
+              ...init?.headers,
+              ...(TATUM_API_KEY ? { 'x-api-key': TATUM_API_KEY } : {}),
+            },
+          }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any),
     });
   }
   return _client;
@@ -56,7 +56,7 @@ export async function storeBlob(data: unknown): Promise<WalrusStoreResult> {
   const blob = typeof data === 'string' ? data : JSON.stringify(data);
   const bytes = new TextEncoder().encode(blob);
 
-  console.log(`[WalrusSDK] storing blob size=${bytes.length} via WalrusClient (testnet)...`);
+  console.log(`[WalrusSDK] storing Finix snapshot size=${bytes.length} via Walrus testnet`);
 
   const result = await client.writeBlob({
     blob: bytes,
@@ -74,7 +74,6 @@ export async function storeBlob(data: unknown): Promise<WalrusStoreResult> {
   };
 }
 
-/** Read blob data from Walrus aggregator */
 export async function getBlob(blobId: string): Promise<unknown> {
   const url = `${AGGREGATOR_URL}/v1/blobs/${encodeURIComponent(blobId)}`;
   console.log(`[WalrusSDK] reading blob from ${url}`);
@@ -85,7 +84,6 @@ export async function getBlob(blobId: string): Promise<unknown> {
   }
 
   const text = await res.text();
-  // Try JSON first, fall back to raw string
   try {
     return JSON.parse(text);
   } catch {
