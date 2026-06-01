@@ -7,476 +7,407 @@ import { useFinixData } from "@/hooks/useFinixData";
 import {
   ArrowRight, Shield, Wallet, Database, Loader2, AlertTriangle, X,
   TrendingUp, Brain, Target, PieChart, Activity,
-  Menu, ExternalLink, ChevronRight, Star, CheckCircle,
-  Lock, Zap, Eye,
+  Menu, ExternalLink, CheckCircle,
+  Layers, Globe, Sparkles, ArrowUpRight,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
 
-// ─── Fade-in on scroll hook ───────────────────────────────────────
+// ─── Scroll Reveal Hook ──────────────────────────────────────────
 function useScrollReveal(threshold = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
-
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.unobserve(el); } },
+      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.unobserve(el); } },
       { threshold }
     );
     obs.observe(el);
     return () => obs.disconnect();
   }, [threshold]);
-
   return { ref, visible };
 }
 
 function Reveal({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   const { ref, visible } = useScrollReveal();
   return (
-    <div
-      ref={ref}
-      className={`transition-all duration-700 ease-out ${
-        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-      } ${className}`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
+    <div ref={ref} className={`transition-all duration-800 ease-[cubic-bezier(0.16,1,0.3,1)] ${visible ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-12 scale-[0.97]"} ${className}`} style={{ transitionDelay: `${delay}ms` }}>
       {children}
     </div>
   );
 }
 
-// ─── Floating Icon Component ──────────────────────────────────────
-function FloatingIcon({ icon: Icon, className = "", delay = 0 }: { icon: LucideIcon; className?: string; delay?: number }) {
-  const { ref, visible } = useScrollReveal(0.3);
+// ─── Data ────────────────────────────────────────────────────────
+function FloatingOrb({ className, delay = 0 }: { className?: string; delay?: number }) {
   return (
-    <div
-      ref={ref}
-      className={`absolute transition-all duration-1000 ease-out ${
-        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-      } ${className}`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-lg shadow-black/5 border border-black/5">
-        <Icon size={20} className="text-[#3B5BDB]" />
-      </div>
-    </div>
+    <div className={`absolute rounded-full blur-3xl animate-float opacity-30 ${className}`} style={{ animationDelay: `${delay}ms` }} />
   );
 }
 
-// ─── Feature Card ─────────────────────────────────────────────────
+// ─── Animated Number ─────────────────────────────────────────────
+function CountUp({ target, suffix = "", duration = 2000 }: { target: number; suffix?: string; duration?: number }) {
+  const [count, setCount] = useState(0);
+  const { ref, visible } = useScrollReveal(0.5);
+  useEffect(() => {
+    if (!visible) return;
+    let start = 0;
+    const step = Math.ceil(target / (duration / 16));
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= target) { setCount(target); clearInterval(timer); }
+      else setCount(start);
+    }, 16);
+    return () => clearInterval(timer);
+  }, [visible, target, duration]);
+  return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
+}
+
+// ─── Data ────────────────────────────────────────────────────────
 const features = [
-  { icon: TrendingUp, title: "Income & Expense Tracking", desc: "Log every transaction on-chain. Categorize income and expenses with a clean, intuitive interface." },
-  { icon: Brain, title: "AI Financial Advisor", desc: "Get personalized insights and money tips powered by AI. Understand your spending patterns." },
-  { icon: Target, title: "Goal Setting", desc: "Set savings goals and track progress. Stay motivated with visual milestones and achievements." },
-  { icon: Database, title: "Walrus Storage", desc: "Your financial data lives on Walrus — decentralized, permanent, and fully owned by you." },
-  { icon: Activity, title: "On-Chain Tracking", desc: "Every transaction is recorded on Sui Network. Transparent, verifiable, and tamper-proof." },
-  { icon: PieChart, title: "Saving Rate Analytics", desc: "Visualize your saving rate with beautiful charts. Know exactly where your money goes." },
+  { icon: TrendingUp, title: "Income & Expense Tracking", desc: "Log every transaction on-chain. Categorize income and expenses with a clean, intuitive interface.", color: "from-blue-500/10 to-indigo-500/10" },
+  { icon: Brain, title: "AI Financial Advisor", desc: "Get personalized insights and money tips powered by AI. Understand your spending patterns.", color: "from-violet-500/10 to-purple-500/10" },
+  { icon: Target, title: "Goal Setting", desc: "Set savings goals and track progress. Stay motivated with visual milestones and achievements.", color: "from-rose-500/10 to-pink-500/10" },
+  { icon: Database, title: "Walrus Storage", desc: "Your financial data lives on Walrus — decentralized, permanent, and fully owned by you.", color: "from-amber-500/10 to-orange-500/10" },
+  { icon: Activity, title: "On-Chain Tracking", desc: "Every transaction is recorded on Sui Network. Transparent, verifiable, and tamper-proof.", color: "from-cyan-500/10 to-teal-500/10" },
+  { icon: PieChart, title: "Saving Rate Analytics", desc: "Visualize your saving rate with beautiful charts. Know exactly where your money goes.", color: "from-emerald-500/10 to-green-500/10" },
 ];
 
-function FeatureCard({ icon: Icon, title, desc, index }: { icon: LucideIcon; title: string; desc: string; index: number }) {
-  return (
-    <Reveal delay={index * 100}>
-      <div className="group relative rounded-[20px] border border-[#E2E8F0] bg-white p-6 md:p-8 hover-card cursor-default">
-        <div className="flex h-[48px] w-[48px] items-center justify-center rounded-[14px] bg-[#EEF2FF] text-[#3B5BDB] group-hover:bg-[#3B5BDB] group-hover:text-white transition-all duration-300">
-          <Icon size={22} />
-        </div>
-        <h3 className="mt-5 text-[17px] font-semibold text-[#111827]">{title}</h3>
-        <p className="mt-2 text-base leading-6 text-[#6B7280]">{desc}</p>
-      </div>
-    </Reveal>
-  );
-}
-
-// ─── Step Card ────────────────────────────────────────────────────
 const steps = [
-  { num: "01", title: "Connect Your Wallet", desc: "Link your Sui wallet — no email sign-up needed. Your wallet is your identity on Finix." },
-  { num: "02", title: "Track Your Finances", desc: "Log income and expenses, set goals, and let AI analyze your spending habits automatically." },
-  { num: "03", title: "Own Your Data", desc: "Everything is stored on Walrus and anchored on Sui. Your data stays decentralized and yours forever." },
+  { num: "01", title: "Connect Your Wallet", desc: "Link your Sui wallet — no email sign-up needed.", icon: Wallet },
+  { num: "02", title: "Track Your Finances", desc: "Log income, expenses, and let AI analyze your habits.", icon: PieChart },
+  { num: "03", title: "Own Your Data", desc: "Stored on Walrus, anchored on Sui. Yours forever.", icon: Database },
 ];
 
-// ─── Highlight Pill ───────────────────────────────────────────────
-const highlights = [
-  { icon: Lock, label: "Non-Custodial" },
-  { icon: Zap, label: "Sub-Second Finality" },
-  { icon: Eye, label: "Fully Transparent" },
-  { icon: Shield, label: "Decentralized" },
+const stats = [
+  { value: 100, suffix: "%", label: "Non-Custodial" },
+  { value: 2, suffix: "s", label: "Finality" },
+  { value: 100, suffix: "%", label: "Transparent" },
+  { value: 0, suffix: "$", label: "Platform Fee" },
 ];
 
+// ─── Page ────────────────────────────────────────────────────────
 export default function Home() {
   const { isConnected, connect, isConnecting, address } = useWallet();
   const { connectWallet, isLoading } = useFinixData();
   const [error, setError] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
     if (isConnected && address && !isLoading) {
-      connectWallet(address).then(() => {
-        router.replace("/dashboard");
-      });
+      connectWallet(address).then(() => router.replace("/dashboard"));
     }
   }, [isConnected, address, isLoading, connectWallet, router]);
 
   const handleConnect = useCallback(async () => {
     setError(null);
-    try {
-      await connect();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to connect wallet");
-    }
+    try { await connect(); }
+    catch (err: unknown) { setError(err instanceof Error ? err.message : "Failed to connect"); }
   }, [connect]);
 
-  const handleLaunchApp = useCallback(() => {
-    router.push("/dashboard");
-  }, [router]);
-
   return (
-    <main className="min-h-screen bg-white text-[#111827] overflow-x-hidden">
-      {/* ─── Error Toast ────────────────────────────────────────── */}
+    <main className="min-h-screen bg-[#FAFBFF] text-[#111827] overflow-x-hidden">
+      {/* ─── Error Toast ──────────────────────────────────────────── */}
       {error && (
-        <div className="fixed top-4 right-4 z-50 flex items-start gap-3 rounded-[12px] border border-red-200 bg-red-50 p-4 shadow-lg max-w-sm animate-slide-up">
+        <div className="fixed top-4 right-4 z-50 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 shadow-xl max-w-sm animate-slide-up">
           <AlertTriangle size={18} className="mt-0.5 shrink-0 text-red-500" />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-red-800">Connection Failed</p>
-            <p className="mt-1 text-xs leading-5 text-red-700">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-2 text-xs font-medium text-red-600 underline hover:text-red-800"
-            >
-              Reload page & try again
-            </button>
+            <p className="mt-1 text-xs text-red-700">{error}</p>
           </div>
-          <button onClick={() => setError(null)} className="shrink-0">
-            <X size={16} className="text-red-400 hover:text-red-600" />
-          </button>
+          <button onClick={() => setError(null)}><X size={16} className="text-red-400 hover:text-red-600" /></button>
         </div>
       )}
 
-      {/* ─── Nav Bar ────────────────────────────────────────────── */}
-      <nav className="fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-xl border-b border-[#E2E8F0]">
-        <div className="mx-auto max-w-[1200px] px-5 md:px-8 h-[64px] flex items-center justify-between">
-          {/* Logo */}
-          <a href="#" className="flex items-center gap-2.5">
-            <Image
-              src="/logos/finix-logo.svg"
-              alt="Finix"
-              width={34}
-              height={34}
-              className="rounded-[10px]"
-            />
-            <span className="text-[17px] font-bold text-[#111827] tracking-tight">Finix</span>
+      {/* ─── Nav ──────────────────────────────────────────────────── */}
+      <nav className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ${scrolled ? "bg-white/90 backdrop-blur-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04)]" : "bg-transparent"}`}>
+        <div className="mx-auto max-w-[1200px] px-5 md:px-8 h-[72px] flex items-center justify-between">
+          <a href="#" className="flex items-center gap-3">
+            <Image src="/logos/finix-logo.svg" alt="Finix" width={36} height={36} className="rounded-xl" />
+            <span className="text-lg font-bold tracking-tight">Finix</span>
           </a>
-
-          {/* Desktop Nav Right */}
-          <div className="hidden md:flex items-center gap-4">
-            <a href="#features" className="text-sm font-medium text-[#6B7280] hover:text-[#111827] transition-colors">Features</a>
-            <a href="#how-it-works" className="text-sm font-medium text-[#6B7280] hover:text-[#111827] transition-colors">How it works</a>
-            <a href="#tech" className="text-sm font-medium text-[#6B7280] hover:text-[#111827] transition-colors">Tech</a>
+          <div className="hidden md:flex items-center gap-1">
+            {["Features", "How it works", "Tech"].map((item) => (
+              <a key={item} href={`#${item.toLowerCase().replace(/\s+/g, "-")}`} className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#111827] rounded-lg hover:bg-black/[0.03] transition-all">{item}</a>
+            ))}
+          </div>
+          <div className="hidden md:flex items-center gap-3">
             {isConnected ? (
-              <button
-                onClick={handleLaunchApp}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#3B5BDB] text-white rounded-[10px] text-sm font-semibold hover:bg-[#3451D0] active:bg-[#2E48BC] transition-all duration-150 btn-press"
-              >
-                Launch App
-                <ExternalLink size={14} />
+              <button onClick={() => router.push("/dashboard")} className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#111827] text-white rounded-xl text-sm font-semibold hover:bg-[#1F2937] transition-all btn-press">
+                Launch App <ExternalLink size={14} />
               </button>
             ) : (
-              <button
-                onClick={handleConnect}
-                disabled={isConnecting}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#3B5BDB] text-white rounded-[10px] text-sm font-semibold hover:bg-[#3451D0] active:bg-[#2E48BC] transition-all duration-150 btn-press"
-              >
-                {isConnecting ? (
-                  <Loader2 size={15} className="animate-spin" />
-                ) : (
-                  <Wallet size={15} />
-                )}
+              <button onClick={handleConnect} disabled={isConnecting} className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#111827] text-white rounded-xl text-sm font-semibold hover:bg-[#1F2937] transition-all btn-press">
+                {isConnecting ? <Loader2 size={15} className="animate-spin" /> : <Wallet size={15} />}
                 {isConnecting ? "Connecting..." : "Connect Wallet"}
               </button>
             )}
           </div>
-
-          {/* Mobile Hamburger */}
-          <button
-            className="md:hidden p-2 text-[#6B7280] hover:text-[#111827]"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
+          <button className="md:hidden p-2 text-[#6B7280]" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Menu">
             <Menu size={22} />
           </button>
         </div>
-
-        {/* Mobile Menu Dropdown */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-[#E2E8F0] bg-white px-5 py-4 space-y-3 animate-slide-up">
-            <a href="#features" onClick={() => setMobileMenuOpen(false)} className="block text-base font-medium text-[#6B7280] hover:text-[#111827]">Features</a>
-            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block text-base font-medium text-[#6B7280] hover:text-[#111827]">How it works</a>
-            <a href="#tech" onClick={() => setMobileMenuOpen(false)} className="block text-base font-medium text-[#6B7280] hover:text-[#111827]">Tech</a>
-            <div className="pt-2">
-              {isConnected ? (
-                <button
-                  onClick={() => { setMobileMenuOpen(false); handleLaunchApp(); }}
-                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#3B5BDB] text-white rounded-[10px] text-base font-semibold"
-                >
-                  Launch App
-                  <ExternalLink size={14} />
-                </button>
-              ) : (
-                <button
-                  onClick={() => { setMobileMenuOpen(false); handleConnect(); }}
-                  disabled={isConnecting}
-                  className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#3B5BDB] text-white rounded-[10px] text-base font-semibold"
-                >
-                  {isConnecting ? (
-                    <Loader2 size={15} className="animate-spin" />
-                  ) : (
-                    <Wallet size={15} />
-                  )}
-                  {isConnecting ? "Connecting..." : "Connect Wallet"}
-                </button>
-              )}
+          <div className="md:hidden border-t border-black/5 bg-white/95 backdrop-blur-2xl px-5 py-4 space-y-1 animate-slide-up">
+            {["Features", "How it works", "Tech"].map((item) => (
+              <a key={item} href={`#${item.toLowerCase().replace(/\s+/g, "-")}`} onClick={() => setMobileMenuOpen(false)} className="block py-3 text-base font-medium text-[#6B7280] hover:text-[#111827]">{item}</a>
+            ))}
+            <div className="pt-3">
+              <button onClick={() => { setMobileMenuOpen(false); handleConnect(); }} className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#111827] text-white rounded-xl text-base font-semibold">
+                {isConnecting ? <Loader2 size={15} className="animate-spin" /> : <Wallet size={15} />}
+                {isConnecting ? "Connecting..." : "Connect Wallet"}
+              </button>
             </div>
           </div>
         )}
       </nav>
 
-      {/* ─── Hero Section ──────────────────────────────────────── */}
-      <section className="relative pt-[64px] overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#EEF2FF] via-white to-white pointer-events-none" />
-        <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full bg-[#3B5BDB]/3 blur-[120px] pointer-events-none" />
-
-        {/* Floating Icons — Desktop Only */}
-        <div className="hidden lg:block">
-          <FloatingIcon icon={TrendingUp} className="top-[140px] left-[8%]" delay={100} />
-          <FloatingIcon icon={Brain} className="top-[100px] right-[10%]" delay={200} />
-          <FloatingIcon icon={Database} className="top-[280px] left-[5%]" delay={300} />
-          <FloatingIcon icon={Target} className="top-[240px] right-[6%]" delay={400} />
-          <FloatingIcon icon={PieChart} className="top-[380px] left-[12%]" delay={500} />
-          <FloatingIcon icon={Activity} className="top-[360px] right-[12%]" delay={600} />
+      {/* ─── Hero ──────────────────────────────────────────────────── */}
+      <section className="relative pt-[72px] overflow-hidden">
+        {/* Gradient bg */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-0 bg-gradient-to-b from-[#EEF2FF] via-[#FAFBFF] to-[#FAFBFF]" />
+          <FloatingOrb className="w-[600px] h-[600px] bg-[#3B5BDB]/20 top-[-100px] left-1/2 -translate-x-1/2" delay={0} />
+          <FloatingOrb className="w-[400px] h-[400px] bg-[#6F8CFF]/15 top-[200px] right-[-100px]" delay={1000} />
+          <FloatingOrb className="w-[300px] h-[300px] bg-[#3B5BDB]/10 top-[400px] left-[-50px]" delay={2000} />
         </div>
 
-        <div className="relative mx-auto max-w-[1200px] px-5 md:px-8 py-20 md:py-28">
+        {/* Floating icons — desktop only */}
+        <div className="hidden xl:block">
+          {[
+            { Icon: TrendingUp, x: "8%", y: "120px", d: 0 },
+            { Icon: Brain, x: "88%", y: "80px", d: 200 },
+            { Icon: Database, x: "5%", y: "350px", d: 400 },
+            { Icon: Target, x: "90%", y: "320px", d: 600 },
+            { Icon: PieChart, x: "12%", y: "520px", d: 800 },
+            { Icon: Activity, x: "85%", y: "500px", d: 1000 },
+            { Icon: Layers, x: "15%", y: "180px", d: 300 },
+            { Icon: Globe, x: "82%", y: "160px", d: 500 },
+          ].map(({ Icon, x, y, d }, i) => (
+            <Reveal key={i} delay={d}>
+              <div className="absolute animate-float" style={{ left: x, top: y, animationDelay: `${d}ms` }}>
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/80 backdrop-blur-sm shadow-lg shadow-black/[0.03] border border-black/[0.04] hover:scale-110 transition-transform duration-300">
+                  <Icon size={22} className="text-[#3B5BDB]/70" />
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+
+        <div className="relative mx-auto max-w-[1200px] px-5 md:px-8 py-24 md:py-36 lg:py-40">
           <Reveal>
-            <div className="max-w-[700px] mx-auto text-center">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#3B5BDB]/15 bg-[#EEF2FF] px-4 py-1.5 mb-6">
-                <Shield size={13} className="text-[#3B5BDB]" />
-                <span className="text-xs font-semibold text-[#3B5BDB] tracking-wide">Personal Finance on Sui Network</span>
+            <div className="max-w-[800px] mx-auto text-center">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#3B5BDB]/10 bg-white/60 backdrop-blur-sm px-4 py-2 mb-8 shadow-sm">
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#3B5BDB]">
+                  <Shield size={11} className="text-white" />
+                </div>
+                <span className="text-xs font-semibold text-[#3B5BDB] tracking-wide uppercase">Personal Finance on Sui Network</span>
               </div>
 
-              <h1 className="text-[42px] md:text-[52px] lg:text-[60px] font-bold leading-[1.05] text-[#111827] tracking-tight">
-                Your Finances,{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#3B5BDB] to-[#6F8CFF]">
-                  On-Chain.
+              <h1 className="text-[48px] sm:text-[56px] md:text-[64px] lg:text-[72px] font-extrabold leading-[1.02] tracking-[-0.03em] text-[#111827]">
+                Your Money.
+                <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#3B5BDB] via-[#5B7BFF] to-[#8BA4FF]">
+                  On-Chain. On Point.
                 </span>
               </h1>
 
-              <p className="mt-5 text-[15px] md:text-md leading-7 text-[#6B7280] max-w-[540px] mx-auto">
-                Connect your Sui wallet to manage income, expenses, goals, and AI-powered insights.
-                Your data is stored securely on Walrus — decentralized and yours forever.
+              <p className="mt-7 text-lg md:text-xl leading-relaxed text-[#6B7280] max-w-[560px] mx-auto font-normal">
+                Connect your Sui wallet.
+                <br className="hidden sm:block" />
+                Track income, expenses, and goals — with AI insights.
+                <br className="hidden sm:block" />
+                Your data lives on Walrus. Decentralized. Yours.
               </p>
 
-              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-                {isConnecting || isLoading ? (
-                  <button
-                    disabled
-                    className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#3B5BDB] text-white rounded-[12px] text-base font-semibold opacity-50 cursor-not-allowed"
-                  >
-                    <Loader2 size={17} className="animate-spin" />
-                    Loading...
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleConnect}
-                    className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-[#3B5BDB] text-white rounded-[12px] text-base font-semibold hover:bg-[#3451D0] active:bg-[#2E48BC] transition-all duration-150 shadow-[0_4px_14px_rgba(59,91,219,0.3)] hover:shadow-[0_6px_24px_rgba(59,91,219,0.4)] btn-press"
-                  >
-                    <Wallet size={17} />
-                    Connect Wallet
-                    <ArrowRight size={16} className="transition-transform duration-200 group-hover:translate-x-0.5" />
-                  </button>
-                )}
-                <span className="text-xs text-[#9CA3AF] flex items-center gap-1.5">
-                  <CheckCircle size={13} className="text-[#10B981]" />
-                  No email required
+              <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+                <button
+                  onClick={handleConnect}
+                  disabled={isConnecting || isLoading}
+                  className="group relative inline-flex items-center gap-3 px-8 py-4 bg-[#111827] text-white rounded-2xl text-base font-semibold transition-all duration-300 hover:shadow-[0_8px_30px_rgba(17,24,39,0.3)] hover:scale-[1.02] btn-press disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isConnecting || isLoading ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : (
+                    <Wallet size={18} />
+                  )}
+                  {isConnecting || isLoading ? "Connecting..." : "Get Started"}
+                  <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#3B5BDB] to-[#5B7BFF] opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
+                </button>
+                <span className="text-sm text-[#9CA3AF] flex items-center gap-2">
+                  <CheckCircle size={14} className="text-[#10B981]" />
+                  No email. No signup. Just your wallet.
                 </span>
               </div>
             </div>
           </Reveal>
+        </div>
 
-          {/* Highlight Pills — replaces fake stats */}
-          <Reveal delay={200}>
-            <div className="mt-14 flex flex-wrap items-center justify-center gap-3">
-              {highlights.map((h) => (
-                <div
-                  key={h.label}
-                  className="inline-flex items-center gap-2 rounded-full border border-[#E2E8F0] bg-white px-4 py-2.5 shadow-sm"
-                >
-                  <h.icon size={14} className="text-[#3B5BDB]" />
-                  <span className="text-sm font-medium text-[#374151]">{h.label}</span>
+        {/* Stats bar */}
+        <Reveal delay={300}>
+          <div className="relative mx-auto max-w-[900px] px-5 md:px-8 pb-20">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+              {stats.map((s) => (
+                <div key={s.label} className="relative rounded-2xl border border-black/[0.04] bg-white/70 backdrop-blur-sm p-6 text-center shadow-sm hover:shadow-md transition-shadow duration-300">
+                  <p className="text-3xl md:text-4xl font-extrabold text-[#111827] tracking-tight">
+                    <CountUp target={s.value} suffix={s.suffix} />
+                  </p>
+                  <p className="mt-1.5 text-sm text-[#6B7280] font-medium">{s.label}</p>
                 </div>
               ))}
             </div>
-          </Reveal>
-        </div>
+          </div>
+        </Reveal>
       </section>
 
-      {/* ─── Features Section ───────────────────────────────────── */}
-      <section id="features" className="py-20 md:py-28 bg-[#F8FAFC]">
+      {/* ─── Features ──────────────────────────────────────────────── */}
+      <section id="features" className="py-24 md:py-32">
         <div className="mx-auto max-w-[1200px] px-5 md:px-8">
           <Reveal>
-            <div className="text-center max-w-[640px] mx-auto mb-14">
-              <span className="inline-block text-xs font-semibold uppercase tracking-[0.16em] text-[#3B5BDB] mb-3">Features</span>
-              <h2 className="text-[34px] md:text-[40px] font-bold text-[#111827] leading-[1.1] tracking-tight">
-                Everything You Need to Master Your Money
+            <div className="text-center max-w-[680px] mx-auto mb-16">
+              <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] text-[#3B5BDB] mb-4">Features</span>
+              <h2 className="text-[36px] md:text-[44px] font-extrabold text-[#111827] leading-[1.1] tracking-[-0.02em]">
+                Everything You Need.
+                <br />
+                <span className="text-[#6B7280]">Nothing You Don&apos;t.</span>
               </h2>
-              <p className="mt-4 text-[15px] leading-7 text-[#6B7280]">
-                Finix combines on-chain transparency with AI-powered insights to give you complete control over your personal finances.
-              </p>
             </div>
           </Reveal>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {features.map((f, i) => (
-              <FeatureCard key={f.title} {...f} index={i} />
+              <Reveal key={f.title} delay={i * 80}>
+                <div className="group relative rounded-3xl border border-black/[0.04] bg-white p-7 md:p-8 transition-all duration-500 hover:shadow-[0_20px_60px_-15px_rgba(59,91,219,0.12)] hover:border-[#3B5BDB]/20 hover:-translate-y-1 cursor-default">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${f.color} text-[#3B5BDB] group-hover:scale-110 transition-transform duration-300`}>
+                    <f.icon size={22} />
+                  </div>
+                  <h3 className="mt-5 text-lg font-bold text-[#111827]">{f.title}</h3>
+                  <p className="mt-2.5 text-[15px] leading-relaxed text-[#6B7280]">{f.desc}</p>
+                  <div className="mt-5 flex items-center gap-1.5 text-sm font-semibold text-[#3B5BDB] opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    Learn more <ArrowUpRight size={14} />
+                  </div>
+                </div>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ─── How It Works Section ───────────────────────────────── */}
-      <section id="how-it-works" className="py-20 md:py-28 bg-white">
+      {/* ─── How It Works ──────────────────────────────────────────── */}
+      <section id="how-it-works" className="py-24 md:py-32 bg-gradient-to-b from-white to-[#FAFBFF]">
         <div className="mx-auto max-w-[1200px] px-5 md:px-8">
           <Reveal>
-            <div className="text-center max-w-[640px] mx-auto mb-14">
-              <span className="inline-block text-xs font-semibold uppercase tracking-[0.16em] text-[#3B5BDB] mb-3">How It Works</span>
-              <h2 className="text-[34px] md:text-[40px] font-bold text-[#111827] leading-[1.1] tracking-tight">
-                Get Started in 3 Simple Steps
+            <div className="text-center max-w-[680px] mx-auto mb-16">
+              <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] text-[#3B5BDB] mb-4">How It Works</span>
+              <h2 className="text-[36px] md:text-[44px] font-extrabold text-[#111827] leading-[1.1] tracking-[-0.02em]">
+                Three Steps.
+                <br />
+                <span className="text-[#6B7280]">Zero Complications.</span>
               </h2>
-              <p className="mt-4 text-[15px] leading-7 text-[#6B7280]">
-                No account creation. No email sign-up. Just your Sui wallet and a few clicks.
-              </p>
             </div>
           </Reveal>
 
-          <div className="grid md:grid-cols-3 gap-6 md:gap-8 relative">
-            {/* Connecting line (desktop) */}
-            <div className="hidden md:block absolute top-[40px] left-[calc(16.66%+24px)] right-[calc(16.66%+24px)] h-[2px] bg-gradient-to-r from-[#3B5BDB]/20 via-[#3B5BDB]/40 to-[#3B5BDB]/20" />
-
+          <div className="grid md:grid-cols-3 gap-8 md:gap-12 relative">
+            <div className="hidden md:block absolute top-[48px] left-[calc(16.66%+32px)] right-[calc(16.66%+32px)] h-[2px] bg-gradient-to-r from-transparent via-[#3B5BDB]/20 to-transparent" />
             {steps.map((s, i) => (
               <Reveal key={s.num} delay={i * 150}>
-                <div className="relative flex flex-col items-center text-center">
-                  <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#EEF2FF] text-[#3B5BDB] text-2xl font-bold relative z-10 border-4 border-white shadow-[0_0_0_2px_rgba(59,91,219,0.15)]">
-                    {s.num}
+                <div className="relative flex flex-col items-center text-center group">
+                  <div className="relative">
+                    <div className="flex h-[88px] w-[88px] items-center justify-center rounded-[28px] bg-gradient-to-br from-[#EEF2FF] to-white text-[#3B5BDB] text-3xl font-extrabold relative z-10 border border-[#3B5BDB]/10 shadow-[0_4px_20px_rgba(59,91,219,0.08)] group-hover:shadow-[0_8px_30px_rgba(59,91,219,0.15)] group-hover:scale-105 transition-all duration-500">
+                      <s.icon size={32} />
+                    </div>
+                    <div className="absolute -top-2 -right-2 flex h-7 w-7 items-center justify-center rounded-full bg-[#111827] text-white text-xs font-bold z-20">
+                      {s.num}
+                    </div>
                   </div>
-                  <h3 className="mt-6 text-[19px] font-semibold text-[#111827]">{s.title}</h3>
-                  <p className="mt-2 text-base leading-6 text-[#6B7280] max-w-[320px]">{s.desc}</p>
+                  <h3 className="mt-7 text-xl font-bold text-[#111827]">{s.title}</h3>
+                  <p className="mt-3 text-[15px] leading-relaxed text-[#6B7280] max-w-[300px]">{s.desc}</p>
                 </div>
               </Reveal>
             ))}
           </div>
 
           <Reveal delay={500}>
-            <div className="mt-14 text-center">
-              {isConnected ? (
-                <button
-                  onClick={handleLaunchApp}
-                  className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#3B5BDB] text-white rounded-[12px] text-base font-semibold hover:bg-[#3451D0] active:bg-[#2E48BC] transition-all duration-150 btn-press"
-                >
-                  Launch App
-                  <ExternalLink size={16} />
-                </button>
-              ) : (
-                <button
-                  onClick={handleConnect}
-                  disabled={isConnecting}
-                  className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#3B5BDB] text-white rounded-[12px] text-base font-semibold hover:bg-[#3451D0] active:bg-[#2E48BC] transition-all duration-150 btn-press"
-                >
-                  {isConnecting ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <Wallet size={16} />
-                  )}
-                  {isConnecting ? "Connecting..." : "Connect Wallet & Get Started"}
-                </button>
-              )}
+            <div className="mt-16 text-center">
+              <button
+                onClick={handleConnect}
+                disabled={isConnecting}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-[#111827] text-white rounded-2xl text-base font-semibold hover:shadow-[0_8px_30px_rgba(17,24,39,0.3)] transition-all btn-press"
+              >
+                {isConnecting ? <Loader2 size={16} className="animate-spin" /> : <Wallet size={16} />}
+                {isConnecting ? "Connecting..." : "Start Tracking Now"}
+              </button>
             </div>
           </Reveal>
         </div>
       </section>
 
-      {/* ─── Tech Section ───────────────────────────────────────── */}
-      <section id="tech" className="py-20 md:py-24 bg-[#111827] text-white">
-        <div className="mx-auto max-w-[1200px] px-5 md:px-8">
+      {/* ─── Tech ──────────────────────────────────────────────────── */}
+      <section id="tech" className="py-24 md:py-32 bg-[#0F172A] text-white relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#3B5BDB]/10 blur-[120px] rounded-full" />
+        </div>
+        <div className="relative mx-auto max-w-[1200px] px-5 md:px-8">
           <Reveal>
-            <div className="text-center max-w-[640px] mx-auto mb-14">
-              <span className="inline-block text-xs font-semibold uppercase tracking-[0.16em] text-[#6F8CFF] mb-3">Technology</span>
-              <h2 className="text-[34px] md:text-[40px] font-bold leading-[1.1] tracking-tight">
-                Built on Battle-Tested Infrastructure
+            <div className="text-center max-w-[680px] mx-auto mb-16">
+              <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] text-[#6F8CFF] mb-4">Technology</span>
+              <h2 className="text-[36px] md:text-[44px] font-extrabold leading-[1.1] tracking-[-0.02em]">
+                Built on
+                <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6F8CFF] to-[#A5B4FC]">Battle-Tested Infrastructure</span>
               </h2>
-              <p className="mt-4 text-[15px] leading-7 text-[#9CA3AF]">
-                Finix leverages the Sui Network for fast, low-cost transactions and Walrus for decentralized, permanent data storage.
-              </p>
             </div>
           </Reveal>
 
           <Reveal delay={100}>
-            <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-10">
-              {/* Sui Badge */}
-              <div className="group relative w-full max-w-[400px] rounded-[20px] border border-white/10 bg-white/5 p-8 hover:bg-white/[0.07] transition-all duration-300 text-center">
-                <div className="flex items-center justify-center gap-4">
-                  <div className="flex h-[56px] w-[56px] items-center justify-center rounded-[16px] bg-[#3B5BDB] overflow-hidden">
-                    <Image
-                      src="/logos/sui-logo.svg"
-                      alt="Sui"
-                      width={36}
-                      height={36}
-                      className="object-contain"
-                    />
+            <div className="grid md:grid-cols-2 gap-6 max-w-[900px] mx-auto">
+              {/* Sui */}
+              <div className="group relative rounded-3xl border border-white/[0.06] bg-white/[0.03] p-8 md:p-10 hover:bg-white/[0.06] transition-all duration-500">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#3B5BDB] overflow-hidden shadow-lg shadow-[#3B5BDB]/20">
+                    <Image src="/logos/sui-logo.svg" alt="Sui" width={40} height={40} className="object-contain" />
                   </div>
-                  <div className="text-left">
-                    <h3 className="text-lg font-bold">Sui Network</h3>
-                    <p className="text-sm text-[#9CA3AF] mt-0.5">Layer 1 Blockchain</p>
+                  <div>
+                    <h3 className="text-xl font-bold">Sui Network</h3>
+                    <p className="text-sm text-[#94A3B8] mt-0.5">Layer 1 Blockchain</p>
                   </div>
                 </div>
-                <p className="mt-5 text-base leading-6 text-[#9CA3AF]">
-                  Fast, scalable, and secure. Sui processes thousands of transactions per second with sub-second finality, making it ideal for everyday financial tracking.
+                <p className="mt-6 text-[15px] leading-relaxed text-[#94A3B8]">
+                  Fast, scalable, and secure. Sub-second finality with parallel execution. Built for everyday financial tracking.
                 </p>
-                <div className="mt-5 flex flex-wrap justify-center gap-2">
-                  {["Parallel Execution", "Move Language", "Low Fees", "Mainnet Ready"].map((tag) => (
-                    <span key={tag} className="inline-block rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-[#9CA3AF]">
-                      {tag}
-                    </span>
+                <div className="mt-6 flex flex-wrap gap-2">
+                  {["Parallel Execution", "Move Language", "Low Fees", "Mainnet"].map((tag) => (
+                    <span key={tag} className="inline-block rounded-full border border-white/[0.08] bg-white/[0.04] px-3.5 py-1.5 text-xs font-medium text-[#94A3B8] group-hover:border-white/[0.12] transition-colors">{tag}</span>
                   ))}
                 </div>
               </div>
 
-              {/* Walrus Badge */}
-              <div className="group relative w-full max-w-[400px] rounded-[20px] border border-white/10 bg-white/5 p-8 hover:bg-white/[0.07] transition-all duration-300 text-center">
-                <div className="flex items-center justify-center gap-4">
-                  <div className="flex h-[56px] w-[56px] items-center justify-center rounded-[16px] bg-white overflow-hidden">
-                    <Image
-                      src="/logos/walrus-logo.svg"
-                      alt="Walrus"
-                      width={36}
-                      height={36}
-                      className="object-contain"
-                    />
+              {/* Walrus */}
+              <div className="group relative rounded-3xl border border-white/[0.06] bg-white/[0.03] p-8 md:p-10 hover:bg-white/[0.06] transition-all duration-500">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white overflow-hidden shadow-lg">
+                    <Image src="/logos/walrus-logo.svg" alt="Walrus" width={40} height={40} className="object-contain" />
                   </div>
-                  <div className="text-left">
-                    <h3 className="text-lg font-bold">Walrus</h3>
-                    <p className="text-sm text-[#9CA3AF] mt-0.5">Decentralized Storage</p>
+                  <div>
+                    <h3 className="text-xl font-bold">Walrus</h3>
+                    <p className="text-sm text-[#94A3B8] mt-0.5">Decentralized Storage</p>
                   </div>
                 </div>
-                <p className="mt-5 text-base leading-6 text-[#9CA3AF]">
-                  Your financial data is stored as Walrus blobs — decentralized, permanent, and fully owned by you. No centralized database, no third-party control.
+                <p className="mt-6 text-[15px] leading-relaxed text-[#94A3B8]">
+                  Your financial data stored as Walrus blobs — decentralized, permanent, and fully owned by you. No third-party control.
                 </p>
-                <div className="mt-5 flex flex-wrap justify-center gap-2">
+                <div className="mt-6 flex flex-wrap gap-2">
                   {["Immutable", "Redundant", "Blob Storage", "Sui-Anchored"].map((tag) => (
-                    <span key={tag} className="inline-block rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-[#9CA3AF]">
-                      {tag}
-                    </span>
+                    <span key={tag} className="inline-block rounded-full border border-white/[0.08] bg-white/[0.04] px-3.5 py-1.5 text-xs font-medium text-[#94A3B8] group-hover:border-white/[0.12] transition-colors">{tag}</span>
                   ))}
                 </div>
               </div>
@@ -485,40 +416,37 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── Pricing / Free Section ─────────────────────────────── */}
-      <section id="pricing" className="py-20 md:py-28 bg-white">
+      {/* ─── Pricing ───────────────────────────────────────────────── */}
+      <section id="pricing" className="py-24 md:py-32">
         <div className="mx-auto max-w-[1200px] px-5 md:px-8">
           <Reveal>
-            <div className="text-center max-w-[640px] mx-auto mb-14">
-              <span className="inline-block text-xs font-semibold uppercase tracking-[0.16em] text-[#3B5BDB] mb-3">Pricing</span>
-              <h2 className="text-[34px] md:text-[40px] font-bold text-[#111827] leading-[1.1] tracking-tight">
-                Free to Use. Forever.
+            <div className="text-center max-w-[680px] mx-auto mb-16">
+              <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] text-[#3B5BDB] mb-4">Pricing</span>
+              <h2 className="text-[36px] md:text-[44px] font-extrabold text-[#111827] leading-[1.1] tracking-[-0.02em]">
+                Free Forever.
               </h2>
-              <p className="mt-4 text-[15px] leading-7 text-[#6B7280]">
-                No subscription fees, no hidden costs. Just pay the minimal Sui network gas fees for transactions.
+              <p className="mt-4 text-lg text-[#6B7280]">
+                No subscription. No hidden fees. Just minimal Sui gas.
               </p>
             </div>
           </Reveal>
 
           <Reveal delay={150}>
-            <div className="max-w-[480px] mx-auto">
-              <div className="relative rounded-[24px] border-2 border-[#3B5BDB] bg-white p-8 md:p-10 shadow-[0_20px_60px_-12px_rgba(59,91,219,0.2)] overflow-hidden">
-                {/* Top gradient accent */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#3B5BDB] to-[#6F8CFF]" />
-
+            <div className="max-w-[520px] mx-auto">
+              <div className="relative rounded-[28px] border-2 border-[#111827] bg-white p-8 md:p-12 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#3B5BDB] to-[#8BA4FF]" />
                 <div className="text-center">
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-[#EEF2FF] px-3 py-1 mb-5">
-                    <Star size={12} className="text-[#3B5BDB]" />
-                    <span className="text-xs font-semibold text-[#3B5BDB]">Popular</span>
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-[#EEF2FF] px-3 py-1.5 mb-6">
+                    <Sparkles size={12} className="text-[#3B5BDB]" />
+                    <span className="text-xs font-bold text-[#3B5BDB] uppercase tracking-wider">Free</span>
                   </div>
-                  <p className="text-[56px] md:text-[64px] font-bold text-[#111827] tracking-tight">
+                  <p className="text-[64px] md:text-[72px] font-extrabold text-[#111827] tracking-tight leading-none">
                     $0
-                    <span className="text-md font-normal text-[#6B7280] ml-1">/month</span>
+                    <span className="text-lg font-normal text-[#6B7280] ml-1">/month</span>
                   </p>
-                  <p className="mt-2 text-base text-[#6B7280]">Always free, no credit card needed</p>
+                  <p className="mt-3 text-base text-[#6B7280]">Always free. No credit card.</p>
                 </div>
-
-                <ul className="mt-8 space-y-3.5">
+                <ul className="mt-10 space-y-4">
                   {[
                     "Unlimited income & expense tracking",
                     "AI-powered financial insights",
@@ -528,36 +456,21 @@ export default function Home() {
                     "Saving rate analytics & charts",
                     "All future features included",
                   ].map((item) => (
-                    <li key={item} className="flex items-start gap-3 text-base text-[#374151]">
-                      <CheckCircle size={16} className="mt-0.5 shrink-0 text-[#10B981]" />
+                    <li key={item} className="flex items-start gap-3 text-[15px] text-[#374151]">
+                      <CheckCircle size={18} className="mt-0.5 shrink-0 text-[#10B981]" />
                       <span>{item}</span>
                     </li>
                   ))}
                 </ul>
-
-                <div className="mt-8">
-                  {isConnected ? (
-                    <button
-                      onClick={handleLaunchApp}
-                      className="w-full inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-[#3B5BDB] text-white rounded-[12px] text-base font-semibold hover:bg-[#3451D0] active:bg-[#2E48BC] transition-all duration-150 btn-press"
-                    >
-                      Launch App
-                      <ChevronRight size={16} />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleConnect}
-                      disabled={isConnecting}
-                      className="w-full inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-[#3B5BDB] text-white rounded-[12px] text-base font-semibold hover:bg-[#3451D0] active:bg-[#2E48BC] transition-all duration-150 btn-press"
-                    >
-                      {isConnecting ? (
-                        <Loader2 size={16} className="animate-spin" />
-                      ) : (
-                        <Wallet size={16} />
-                      )}
-                      {isConnecting ? "Connecting..." : "Get Started Free"}
-                    </button>
-                  )}
+                <div className="mt-10">
+                  <button
+                    onClick={handleConnect}
+                    disabled={isConnecting}
+                    className="w-full inline-flex items-center justify-center gap-2 px-7 py-4 bg-[#111827] text-white rounded-2xl text-base font-semibold hover:bg-[#1F2937] transition-all btn-press"
+                  >
+                    {isConnecting ? <Loader2 size={16} className="animate-spin" /> : <Wallet size={16} />}
+                    {isConnecting ? "Connecting..." : "Get Started Free"}
+                  </button>
                 </div>
               </div>
             </div>
@@ -565,99 +478,51 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── Footer ─────────────────────────────────────────────── */}
-      <footer className="bg-[#111827] text-white py-12 md:py-16">
+      {/* ─── Footer ─────────────────────────────────────────────────── */}
+      <footer className="bg-[#111827] text-white py-16 md:py-20">
         <div className="mx-auto max-w-[1200px] px-5 md:px-8">
-          <div className="grid md:grid-cols-4 gap-8 md:gap-12">
-            {/* Brand */}
+          <div className="grid md:grid-cols-4 gap-10 md:gap-12">
             <div className="md:col-span-1">
-              <div className="flex items-center gap-2.5 mb-4">
-                <Image
-                  src="/logos/finix-logo.svg"
-                  alt="Finix"
-                  width={30}
-                  height={30}
-                  className="rounded-[8px]"
-                />
-                <span className="text-md font-bold tracking-tight">Finix</span>
+              <div className="flex items-center gap-2.5 mb-5">
+                <Image src="/logos/finix-logo.svg" alt="Finix" width={32} height={32} className="rounded-lg" />
+                <span className="text-lg font-bold tracking-tight">Finix</span>
               </div>
-              <p className="text-sm leading-6 text-[#9CA3AF] max-w-[240px]">
+              <p className="text-sm leading-relaxed text-[#9CA3AF] max-w-[240px]">
                 Personal finance on Sui Network. Your data, your rules, on-chain.
               </p>
             </div>
-
-            {/* Product */}
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-[#9CA3AF] mb-4">Product</h4>
-              <ul className="space-y-2.5">
+              <h4 className="text-xs font-bold uppercase tracking-[0.15em] text-[#6B7280] mb-5">Product</h4>
+              <ul className="space-y-3">
                 {["Features", "How it Works", "Technology", "Pricing"].map((item) => (
                   <li key={item}>
-                    <a href={`#${item.toLowerCase().replace(/\s+/g, "-")}`} className="text-sm text-[#D1D5DB] hover:text-white transition-colors">
-                      {item}
-                    </a>
+                    <a href={`#${item.toLowerCase().replace(/\s+/g, "-")}`} className="text-sm text-[#D1D5DB] hover:text-white transition-colors">{item}</a>
                   </li>
                 ))}
               </ul>
             </div>
-
-            {/* Resources */}
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-[#9CA3AF] mb-4">Resources</h4>
-              <ul className="space-y-2.5">
-                <li>
-                  <a href="https://github.com/oktavian3/finix" target="_blank" rel="noopener noreferrer" className="text-sm text-[#D1D5DB] hover:text-white transition-colors inline-flex items-center gap-1.5">
-                    Documentation
-                    <ExternalLink size={11} className="opacity-50" />
-                  </a>
-                </li>
-                <li>
-                  <a href="https://sui.io" target="_blank" rel="noopener noreferrer" className="text-sm text-[#D1D5DB] hover:text-white transition-colors inline-flex items-center gap-1.5">
-                    Sui Network
-                    <ExternalLink size={11} className="opacity-50" />
-                  </a>
-                </li>
-                <li>
-                  <a href="https://walrus.xyz" target="_blank" rel="noopener noreferrer" className="text-sm text-[#D1D5DB] hover:text-white transition-colors inline-flex items-center gap-1.5">
-                    Walrus Storage
-                    <ExternalLink size={11} className="opacity-50" />
-                  </a>
-                </li>
-                <li>
-                  <a href="https://github.com/oktavian3/finix" target="_blank" rel="noopener noreferrer" className="text-sm text-[#D1D5DB] hover:text-white transition-colors inline-flex items-center gap-1.5">
-                    GitHub
-                    <ExternalLink size={11} className="opacity-50" />
-                  </a>
-                </li>
+              <h4 className="text-xs font-bold uppercase tracking-[0.15em] text-[#6B7280] mb-5">Resources</h4>
+              <ul className="space-y-3">
+                <li><a href="https://github.com/oktavian3/finix" target="_blank" rel="noopener noreferrer" className="text-sm text-[#D1D5DB] hover:text-white transition-colors inline-flex items-center gap-1.5">Documentation <ExternalLink size={11} className="opacity-40" /></a></li>
+                <li><a href="https://sui.io" target="_blank" rel="noopener noreferrer" className="text-sm text-[#D1D5DB] hover:text-white transition-colors inline-flex items-center gap-1.5">Sui Network <ExternalLink size={11} className="opacity-40" /></a></li>
+                <li><a href="https://walrus.xyz" target="_blank" rel="noopener noreferrer" className="text-sm text-[#D1D5DB] hover:text-white transition-colors inline-flex items-center gap-1.5">Walrus Storage <ExternalLink size={11} className="opacity-40" /></a></li>
+                <li><a href="https://github.com/oktavian3/finix" target="_blank" rel="noopener noreferrer" className="text-sm text-[#D1D5DB] hover:text-white transition-colors inline-flex items-center gap-1.5">GitHub <ExternalLink size={11} className="opacity-40" /></a></li>
               </ul>
             </div>
-
-            {/* Connect */}
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-[#9CA3AF] mb-4">Connect</h4>
-              <ul className="space-y-2.5">
-                <li>
-                  <a href="https://x.com/satyaXBT" target="_blank" rel="noopener noreferrer" className="text-sm text-[#D1D5DB] hover:text-white transition-colors inline-flex items-center gap-1.5">
-                    X (Twitter)
-                    <ExternalLink size={11} className="opacity-50" />
-                  </a>
-                </li>
-                <li>
-                  <a href="https://t.me/satyaxbt" target="_blank" rel="noopener noreferrer" className="text-sm text-[#D1D5DB] hover:text-white transition-colors inline-flex items-center gap-1.5">
-                    Telegram
-                    <ExternalLink size={11} className="opacity-50" />
-                  </a>
-                </li>
+              <h4 className="text-xs font-bold uppercase tracking-[0.15em] text-[#6B7280] mb-5">Connect</h4>
+              <ul className="space-y-3">
+                <li><a href="https://x.com/satyaXBT" target="_blank" rel="noopener noreferrer" className="text-sm text-[#D1D5DB] hover:text-white transition-colors inline-flex items-center gap-1.5">X (Twitter) <ExternalLink size={11} className="opacity-40" /></a></li>
+                <li><a href="https://t.me/satyaxbt" target="_blank" rel="noopener noreferrer" className="text-sm text-[#D1D5DB] hover:text-white transition-colors inline-flex items-center gap-1.5">Telegram <ExternalLink size={11} className="opacity-40" /></a></li>
               </ul>
             </div>
           </div>
-
-          <div className="mt-10 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-[#6B7280]">
-              &copy; {new Date().getFullYear()} Finix. Built on Sui Network with Walrus Storage.
-            </p>
-            <div className="flex items-center gap-4">
-              <span className="text-xs text-[#6B7280]">Privacy</span>
-              <span className="text-xs text-[#6B7280]">Terms</span>
+          <div className="mt-14 pt-8 border-t border-white/[0.06] flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-[#4B5563]">&copy; {new Date().getFullYear()} Finix. Built on Sui Network with Walrus Storage.</p>
+            <div className="flex items-center gap-6">
+              <span className="text-xs text-[#4B5563] hover:text-[#6B7280] cursor-pointer transition-colors">Privacy</span>
+              <span className="text-xs text-[#4B5563] hover:text-[#6B7280] cursor-pointer transition-colors">Terms</span>
             </div>
           </div>
         </div>
