@@ -5,11 +5,13 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useWallet } from "@/hooks/useWallet";
 import { useFinixData } from "@/hooks/useFinixData";
 import {
-  ArrowRight, Shield, Wallet, Waves, Database, Loader2, AlertTriangle, X,
+  ArrowRight, Shield, Wallet, Database, Loader2, AlertTriangle, X,
   TrendingUp, Brain, Target, PieChart, Activity,
   Menu, ExternalLink, ChevronRight, Star, CheckCircle,
+  Lock, Zap, Eye,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import Image from "next/image";
 
 // ─── Fade-in on scroll hook ───────────────────────────────────────
 function useScrollReveal(threshold = 0.15) {
@@ -45,31 +47,20 @@ function Reveal({ children, className = "", delay = 0 }: { children: React.React
   );
 }
 
-// ─── Animated Counter ─────────────────────────────────────────────
-function AnimatedStat({ value, suffix = "", label }: { value: number; suffix?: string; label: string }) {
-  const [count, setCount] = useState(0);
-  const { ref, visible } = useScrollReveal(0.5);
-
-  useEffect(() => {
-    if (!visible) return;
-    let start = 0;
-    const end = value;
-    const duration = 1500;
-    const step = Math.ceil(end / (duration / 16));
-    const timer = setInterval(() => {
-      start += step;
-      if (start >= end) { setCount(end); clearInterval(timer); }
-      else setCount(start);
-    }, 16);
-    return () => clearInterval(timer);
-  }, [visible, value]);
-
+// ─── Floating Icon Component ──────────────────────────────────────
+function FloatingIcon({ icon: Icon, className = "", delay = 0 }: { icon: LucideIcon; className?: string; delay?: number }) {
+  const { ref, visible } = useScrollReveal(0.3);
   return (
-    <div ref={ref} className="text-center">
-      <p className="text-[36px] md:text-[42px] font-bold text-[#3B5BDB]">
-        {count.toLocaleString()}{suffix}
-      </p>
-      <p className="text-sm text-[#6B7280] mt-1">{label}</p>
+    <div
+      ref={ref}
+      className={`absolute transition-all duration-1000 ease-out ${
+        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+      } ${className}`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-lg shadow-black/5 border border-black/5">
+        <Icon size={20} className="text-[#3B5BDB]" />
+      </div>
     </div>
   );
 }
@@ -103,6 +94,14 @@ const steps = [
   { num: "01", title: "Connect Your Wallet", desc: "Link your Sui wallet — no email sign-up needed. Your wallet is your identity on Finix." },
   { num: "02", title: "Track Your Finances", desc: "Log income and expenses, set goals, and let AI analyze your spending habits automatically." },
   { num: "03", title: "Own Your Data", desc: "Everything is stored on Walrus and anchored on Sui. Your data stays decentralized and yours forever." },
+];
+
+// ─── Highlight Pill ───────────────────────────────────────────────
+const highlights = [
+  { icon: Lock, label: "Non-Custodial" },
+  { icon: Zap, label: "Sub-Second Finality" },
+  { icon: Eye, label: "Fully Transparent" },
+  { icon: Shield, label: "Decentralized" },
 ];
 
 export default function Home() {
@@ -160,9 +159,13 @@ export default function Home() {
         <div className="mx-auto max-w-[1200px] px-5 md:px-8 h-[64px] flex items-center justify-between">
           {/* Logo */}
           <a href="#" className="flex items-center gap-2.5">
-            <div className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-[#3B5BDB]">
-              <span className="text-white text-md font-bold">F</span>
-            </div>
+            <Image
+              src="/logos/finix-logo.svg"
+              alt="Finix"
+              width={34}
+              height={34}
+              className="rounded-[10px]"
+            />
             <span className="text-[17px] font-bold text-[#111827] tracking-tight">Finix</span>
           </a>
 
@@ -245,6 +248,16 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#EEF2FF] via-white to-white pointer-events-none" />
         <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full bg-[#3B5BDB]/3 blur-[120px] pointer-events-none" />
 
+        {/* Floating Icons — Desktop Only */}
+        <div className="hidden lg:block">
+          <FloatingIcon icon={TrendingUp} className="top-[140px] left-[8%]" delay={100} />
+          <FloatingIcon icon={Brain} className="top-[100px] right-[10%]" delay={200} />
+          <FloatingIcon icon={Database} className="top-[280px] left-[5%]" delay={300} />
+          <FloatingIcon icon={Target} className="top-[240px] right-[6%]" delay={400} />
+          <FloatingIcon icon={PieChart} className="top-[380px] left-[12%]" delay={500} />
+          <FloatingIcon icon={Activity} className="top-[360px] right-[12%]" delay={600} />
+        </div>
+
         <div className="relative mx-auto max-w-[1200px] px-5 md:px-8 py-20 md:py-28">
           <Reveal>
             <div className="max-w-[700px] mx-auto text-center">
@@ -292,13 +305,18 @@ export default function Home() {
             </div>
           </Reveal>
 
-          {/* Animated Stats */}
+          {/* Highlight Pills — replaces fake stats */}
           <Reveal delay={200}>
-            <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10 max-w-[800px] mx-auto">
-              <AnimatedStat value={12800} suffix="+" label="Transactions Tracked" />
-              <AnimatedStat value={3400} suffix="+" label="Active Users" />
-              <AnimatedStat value={92} suffix="%" label="Avg. Satisfaction" />
-              <AnimatedStat value={24} suffix="/7" label="Data Availability" />
+            <div className="mt-14 flex flex-wrap items-center justify-center gap-3">
+              {highlights.map((h) => (
+                <div
+                  key={h.label}
+                  className="inline-flex items-center gap-2 rounded-full border border-[#E2E8F0] bg-white px-4 py-2.5 shadow-sm"
+                >
+                  <h.icon size={14} className="text-[#3B5BDB]" />
+                  <span className="text-sm font-medium text-[#374151]">{h.label}</span>
+                </div>
+              ))}
             </div>
           </Reveal>
         </div>
@@ -408,8 +426,14 @@ export default function Home() {
               {/* Sui Badge */}
               <div className="group relative w-full max-w-[400px] rounded-[20px] border border-white/10 bg-white/5 p-8 hover:bg-white/[0.07] transition-all duration-300 text-center">
                 <div className="flex items-center justify-center gap-4">
-                  <div className="flex h-[56px] w-[56px] items-center justify-center rounded-[16px] bg-[#3B5BDB] text-white">
-                    <Waves size={26} />
+                  <div className="flex h-[56px] w-[56px] items-center justify-center rounded-[16px] bg-[#3B5BDB] overflow-hidden">
+                    <Image
+                      src="/logos/sui-logo.svg"
+                      alt="Sui"
+                      width={36}
+                      height={36}
+                      className="object-contain"
+                    />
                   </div>
                   <div className="text-left">
                     <h3 className="text-lg font-bold">Sui Network</h3>
@@ -431,8 +455,14 @@ export default function Home() {
               {/* Walrus Badge */}
               <div className="group relative w-full max-w-[400px] rounded-[20px] border border-white/10 bg-white/5 p-8 hover:bg-white/[0.07] transition-all duration-300 text-center">
                 <div className="flex items-center justify-center gap-4">
-                  <div className="flex h-[56px] w-[56px] items-center justify-center rounded-[16px] bg-white text-[#111827]">
-                    <Database size={26} />
+                  <div className="flex h-[56px] w-[56px] items-center justify-center rounded-[16px] bg-white overflow-hidden">
+                    <Image
+                      src="/logos/walrus-logo.svg"
+                      alt="Walrus"
+                      width={36}
+                      height={36}
+                      className="object-contain"
+                    />
                   </div>
                   <div className="text-left">
                     <h3 className="text-lg font-bold">Walrus</h3>
@@ -542,9 +572,13 @@ export default function Home() {
             {/* Brand */}
             <div className="md:col-span-1">
               <div className="flex items-center gap-2.5 mb-4">
-                <div className="flex h-[30px] w-[30px] items-center justify-center rounded-[8px] bg-[#3B5BDB]">
-                  <span className="text-white text-base font-bold">F</span>
-                </div>
+                <Image
+                  src="/logos/finix-logo.svg"
+                  alt="Finix"
+                  width={30}
+                  height={30}
+                  className="rounded-[8px]"
+                />
                 <span className="text-md font-bold tracking-tight">Finix</span>
               </div>
               <p className="text-sm leading-6 text-[#9CA3AF] max-w-[240px]">
@@ -570,11 +604,30 @@ export default function Home() {
             <div>
               <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-[#9CA3AF] mb-4">Resources</h4>
               <ul className="space-y-2.5">
-                {["Documentation", "Sui Network", "Walrus Storage", "GitHub"].map((item) => (
-                  <li key={item}>
-                    <span className="text-sm text-[#D1D5DB] hover:text-white transition-colors cursor-pointer">{item}</span>
-                  </li>
-                ))}
+                <li>
+                  <a href="https://github.com/oktavian3/finix" target="_blank" rel="noopener noreferrer" className="text-sm text-[#D1D5DB] hover:text-white transition-colors inline-flex items-center gap-1.5">
+                    Documentation
+                    <ExternalLink size={11} className="opacity-50" />
+                  </a>
+                </li>
+                <li>
+                  <a href="https://sui.io" target="_blank" rel="noopener noreferrer" className="text-sm text-[#D1D5DB] hover:text-white transition-colors inline-flex items-center gap-1.5">
+                    Sui Network
+                    <ExternalLink size={11} className="opacity-50" />
+                  </a>
+                </li>
+                <li>
+                  <a href="https://walrus.xyz" target="_blank" rel="noopener noreferrer" className="text-sm text-[#D1D5DB] hover:text-white transition-colors inline-flex items-center gap-1.5">
+                    Walrus Storage
+                    <ExternalLink size={11} className="opacity-50" />
+                  </a>
+                </li>
+                <li>
+                  <a href="https://github.com/oktavian3/finix" target="_blank" rel="noopener noreferrer" className="text-sm text-[#D1D5DB] hover:text-white transition-colors inline-flex items-center gap-1.5">
+                    GitHub
+                    <ExternalLink size={11} className="opacity-50" />
+                  </a>
+                </li>
               </ul>
             </div>
 
@@ -582,11 +635,18 @@ export default function Home() {
             <div>
               <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-[#9CA3AF] mb-4">Connect</h4>
               <ul className="space-y-2.5">
-                {["Twitter / X", "Discord", "Telegram", "Blog"].map((item) => (
-                  <li key={item}>
-                    <span className="text-sm text-[#D1D5DB] hover:text-white transition-colors cursor-pointer">{item}</span>
-                  </li>
-                ))}
+                <li>
+                  <a href="https://x.com/satyaXBT" target="_blank" rel="noopener noreferrer" className="text-sm text-[#D1D5DB] hover:text-white transition-colors inline-flex items-center gap-1.5">
+                    X (Twitter)
+                    <ExternalLink size={11} className="opacity-50" />
+                  </a>
+                </li>
+                <li>
+                  <a href="https://t.me/satyaxbt" target="_blank" rel="noopener noreferrer" className="text-sm text-[#D1D5DB] hover:text-white transition-colors inline-flex items-center gap-1.5">
+                    Telegram
+                    <ExternalLink size={11} className="opacity-50" />
+                  </a>
+                </li>
               </ul>
             </div>
           </div>

@@ -103,6 +103,29 @@ a, button, input, select, textarea {
   animation: fade-in 0.3s ease-out;
 }
 
+/* ─── Float Animation (for floating icons) ─── */
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-float-delay-1 {
+  animation: float 4s ease-in-out 0.5s infinite;
+}
+
+.animate-float-delay-2 {
+  animation: float 4s ease-in-out 1s infinite;
+}
+
+.animate-float-delay-3 {
+  animation: float 4s ease-in-out 1.5s infinite;
+}
+
 /* ─── Scale In Animation ─── */
 
 @keyframes scale-in {
