@@ -16,12 +16,21 @@ export default function ProfilePage() {
   const [savingTarget, setSavingTarget] = useState(data.profile.monthlyTargetSavingRate);
   const [showDanger, setShowDanger] = useState(false);
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     updateData({
       ...data,
       profile: { ...data.profile, displayName, monthlyTargetSavingRate: savingTarget },
     });
     showToast("success", "Profile updated");
+
+    // Auto-sync to Walrus so name survives refresh
+    try {
+      await saveToWalrus();
+      showToast("success", "Profile saved & synced to Walrus");
+    } catch {
+      // localStorage cache already updated by updateData, Walrus sync is best-effort
+      showToast("info", "Profile saved locally", "Walrus sync failed, but data is cached on this device");
+    }
   };
 
   const handleExportData = () => {
