@@ -58,6 +58,21 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
   const currentSummary = data ? computeMonthlySummary(data, currentMonth) : emptySummary();
   const allSummaries = data ? computeAllSummaries(data) : [];
 
+  // Set initial data from localStorage IMMEDIATELY on mount to avoid flash of empty
+  useEffect(() => {
+    const addr = currentAccount?.address;
+    if (!addr || initializedRef.current[addr]) return;
+    const cached = localStorage.getItem(`finix_cache_${addr}`);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached) as FinixUserData;
+        if (parsed && parsed.transactions) {
+          setData(parsed);
+        }
+      } catch { /* ignore */ }
+    }
+  }, [currentAccount?.address]);
+
   // --- Wallet auto-detect + data loading (runs when wallet changes) ---
   useEffect(() => {
     const addr = currentAccount?.address ?? null;
@@ -65,12 +80,12 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
     prevAddrRef.current = addr;
 
     if (addr === null) {
-      // Wallet disconnected or not yet loaded — don't wipe data if we just had it
-      // Only wipe if this is a genuine disconnect (not initial load)
+      // Wallet disconnected or not yet loaded
       if (prev !== null) {
+        // Genuine disconnect — keep local cache so next reconnect can restore
         setWalletAddress(null);
         setIsConnected(false);
-        setData(null);
+        // Don't wipe data — preserve for reconnection
         setBlobId(null);
         setObjectId(null);
         setWalrusNetwork(null);
@@ -111,7 +126,7 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
                 return;
               }
             } else if (res.status === 400 || res.status === 404) {
-              // Blob not found (testnet blob deleted or mainnet never existed) — clear stale keys
+              // Blob not found — clear stale keys
               localStorage.removeItem(blobIdKey(addr));
               localStorage.removeItem(objectIdKey(addr));
               localStorage.removeItem(walrusNetworkKey(addr));
@@ -122,7 +137,7 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
           } catch { /* fall through to local cache */ }
         }
 
-        // Fallback: local cache
+        // Fallback: local cache (already set above in the immediate effect)
         const cached = localStorage.getItem(`finix_cache_${addr}`);
         if (cached) {
           try {
@@ -135,10 +150,15 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
           } catch { /* ignore */ }
         }
 
-        // New user — empty state
-        setData(createEmptyUserData(addr));
+        // If no data yet, set empty
+        if (!data) {
+          setData(createEmptyUserData(addr));
+        }
       } catch {
-        setData(createEmptyUserData(addr));
+        // DON'T overwrite existing data on error — keep what we have from cache
+        if (!data) {
+          setData(createEmptyUserData(addr));
+        }
       } finally {
         setIsLoading(false);
       }
