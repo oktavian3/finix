@@ -5,6 +5,9 @@ import { AppProviders } from "@/providers/AppProviders";
 export const metadata: Metadata = {
   title: "Finix",
   description: "Track your money, on-chain.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
