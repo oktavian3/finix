@@ -94,7 +94,8 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
           setBlobId(savedBlobId);
           setObjectId(localStorage.getItem(objectIdKey(addr)));
           const savedNetwork = localStorage.getItem(walrusNetworkKey(addr));
-          setWalrusNetwork(savedNetwork === 'testnet' ? 'testnet' : 'mainnet');
+          const networkIsMainnet = savedNetwork === 'mainnet';
+          setWalrusNetwork(networkIsMainnet ? 'mainnet' : null);
           try {
             const res = await fetch(`/api/walrus?blobId=${encodeURIComponent(savedBlobId)}`);
             if (res.ok) {
@@ -109,6 +110,14 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
                 setIsLoading(false);
                 return;
               }
+            } else if (res.status === 400 || res.status === 404) {
+              // Blob not found (testnet blob deleted or mainnet never existed) — clear stale keys
+              localStorage.removeItem(blobIdKey(addr));
+              localStorage.removeItem(objectIdKey(addr));
+              localStorage.removeItem(walrusNetworkKey(addr));
+              setBlobId(null);
+              setObjectId(null);
+              setWalrusNetwork(null);
             }
           } catch { /* fall through to local cache */ }
         }
