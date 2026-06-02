@@ -47,7 +47,8 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
   const [isSaving, setIsSaving] = useState(false);
   const [successBlobId, setSuccessBlobId] = useState<string | null>(null);
   const [successObjectId, setSuccessObjectId] = useState<string | null>(null);
-  
+  const [successNetwork, setSuccessNetwork] = useState<'mainnet' | 'testnet'>('mainnet');
+
 
   const reset = () => {
     setStep(1);
@@ -102,6 +103,7 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
           registerWalrusSnapshot({ blobId: result.blobId, objectId: result.objectId || null, network });
           setSuccessBlobId(result.blobId);
           setSuccessObjectId(result.objectId || null);
+          setSuccessNetwork(network as 'mainnet' | 'testnet');
           showToast('success', `Transaction saved to Walrus on Sui ${network === 'testnet' ? 'Testnet' : 'Mainnet'}`);
           setIsSaving(false);
           return;
@@ -273,7 +275,7 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
               <Button
                 disabled={!successObjectId}
                 onClick={() => successObjectId && window.open(
-                  `https://suiscan.xyz/mainnet/object/${successObjectId}`,
+                  `https://suiscan.xyz/${successNetwork}/object/${successObjectId}/tx-blocks`,
                   '_blank',
                   'noopener,noreferrer'
                 )}
