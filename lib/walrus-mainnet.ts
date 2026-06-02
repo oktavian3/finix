@@ -40,7 +40,9 @@ function getKeypair(): Ed25519Keypair {
     } else {
       const pk = process.env.SUI_PRIVATE_KEY;
       if (!pk) throw new Error('SUI_PRIVATE_KEY or SUI_MNEMONIC not set');
-      _keypair = Ed25519Keypair.fromSecretKey(Uint8Array.from(Buffer.from(pk, 'hex')));
+      // Support: raw 32-byte hex, suiprivkey base64, or 64-byte hex (keypair)
+      const clean = pk.trim();
+      _keypair = Ed25519Keypair.fromSecretKey(Uint8Array.from(Buffer.from(clean, 'hex')));
     }
   }
   return _keypair;
