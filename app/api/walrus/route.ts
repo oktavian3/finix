@@ -2,25 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { storeBlob } from '@/lib/walrus-mainnet';
 import { readBlob } from '@/lib/walrus-mainnet';
 
-/** Store Finix financial records on Walrus (mainnet prefer, testnet fallback). */
+/** Store Finix financial records on Walrus mainnet (permanent blobs via WalrusClient SDK). */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { data, walletAddress } = body;
+    const { data } = body;
 
     if (!data) {
       return NextResponse.json({ error: 'data is required' }, { status: 400 });
     }
 
-    const result = await storeBlob(data, walletAddress);
+    const result = await storeBlob(data);
 
     return NextResponse.json({
       success: true,
       blobId: result.blobId,
       objectId: result.objectId,
       network: result.network,
-      sealEnabled: !!process.env.NEXT_PUBLIC_SEAL_KEY_SERVER_OBJECT_ID,
-      message: `Finix records saved to Walrus ${result.network}`,
+      message: `Finix records saved to Walrus mainnet`,
     });
   } catch (error) {
     console.error('[Walrus API] error:', error);

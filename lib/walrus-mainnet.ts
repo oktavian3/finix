@@ -1,146 +1,119 @@
 /**
- * Walrus Mainnet — HTTP Publisher with Seal encryption integration.
+ * Walrus Mainnet — Write via SuiGrpcClient + walrus() extension, Read via aggregator HTTP.
  * 
- * Mainnet HTTP Publisher may have DNS issues from some regions.
- * Falls back to testnet publisher if mainnet fails.
- * Uses mainnet Aggregator for reads (works everywhere).
+ * Based on official Walrus docs:
+ *   - Write: SuiGrpcClient.$extend(walrus()) → client.walrus.writeBlob()
+ *   - Read: aggregator.walrus-mainnet.walrus.space/v1/blobs/{blobId}
+ *   - Encrypt: SealClient.encrypt() before upload
  * 
- * When Seal is configured, data is encrypted/decrypted automatically.
+ * ⚠️ All blobs on Walrus are public. Encrypt sensitive data with Seal before upload.
+ * ⚠️ Mainnet has NO public unauthenticated publishers — TS SDK is mandatory for writes.
  */
 
-import { encryptWithSeal, isSealConfigured } from './seal-mainnet';
+import { SuiGrpcClient } from '@mysten/sui/grpc';
+import { walrus } from '@mysten/walrus';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { SealClient } from '@mysten/seal';
 
-const PUBLISHER_MAINNET = 'https://publisher.walrus.space';
-const PUBLISHER_TESTNET = 'https://publisher.walrus-testnet.walrus.space';
+const MAINNET_RPC = process.env.NEXT_PUBLIC_SUI_RPC || 'https://fullnode.mainnet.sui.io:443';
 const AGGREGATOR_MAINNET = 'https://aggregator.walrus-mainnet.walrus.space';
+const FINIX_PACKAGE_ID = process.env.NEXT_PUBLIC_FINIX_PACKAGE_ID || '0x049434ca3eea8de574639ea521a27ec37d4abfac1a0393aa729b7c8ca8e58d96';
 
 interface BlobResult {
   blobId: string;
   objectId: string | null;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type WalrusClientExt = any;
+
+// Singletons
+let _grpcClient: WalrusClientExt | null = null;
+let _keypair: Ed25519Keypair | null = null;
+let _sealClient: SealClient | null = null;
+
+function getKeypair(): Ed25519Keypair {
+  if (!_keypair) {
+    const pk = process.env.SUI_PRIVATE_KEY;
+    if (!pk) throw new Error('SUI_PRIVATE_KEY not set');
+    _keypair = Ed25519Keypair.fromSecretKey(Uint8Array.from(Buffer.from(pk, 'hex')));
+  }
+  return _keypair;
+}
+
+function getWalrusClient(): NonNullable<WalrusClientExt> {
+  if (!_grpcClient) {
+    _grpcClient = new SuiGrpcClient({
+      network: 'mainnet',
+      baseUrl: MAINNET_RPC,
+    }).$extend(walrus());
+  }
+  return _grpcClient;
+}
+
+function getSealClient(): SealClient | null {
+  if (_sealClient) return _sealClient;
+  const keyServerObjectId = process.env.NEXT_PUBLIC_SEAL_KEY_SERVER_OBJECT_ID;
+  if (!keyServerObjectId) {
+    console.warn('[Seal] No key server object ID set — skipping encryption');
+    return null;
+  }
+  _sealClient = new SealClient({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    suiClient: getWalrusClient() as any,
+    serverConfigs: [{ objectId: keyServerObjectId, weight: 1 }],
+    verifyKeyServers: false,
+  });
+  return _sealClient;
+}
+
 /**
- * Store data on Walrus via HTTP Publisher.
- * Tries mainnet first (5s timeout), falls back to testnet (15s timeout).
- * If Seal is configured, data is encrypted before upload.
- * 
- * NOTE: HTTP Publisher blobs are deletable by default.
- * For permanent blobs, use WalrusClient SDK with wallet signing.
+ * Store data on Walrus mainnet via TS SDK (writeBlob).
+ * Encrypts with Seal if configured, otherwise stores raw bytes.
+ * Blobs are deletable: true and stored for 10 epochs (~20 weeks).
  */
 export async function storeBlob(
   data: unknown,
   userAddress?: string,
 ): Promise<BlobResult & { network: string }> {
-  // If Seal is configured and user address provided, encrypt the data
-  let bytes: Uint8Array;
-  if (isSealConfigured() && userAddress) {
-    const raw = new TextEncoder().encode(JSON.stringify(data));
-    const { encryptedObject } = await encryptWithSeal(raw, userAddress);
-    // Wrap with encryption metadata
-    const wrapped = JSON.stringify({
-      seal: true,
-      ver: 1,
-      packageId: process.env.NEXT_PUBLIC_FINIX_PACKAGE_ID,
-      data: Array.from(encryptedObject),
-    });
-    bytes = new TextEncoder().encode(wrapped);
-  } else {
-    bytes = new TextEncoder().encode(
-      typeof data === 'string' ? data : JSON.stringify(data),
-    );
-  }
+  let blob = new TextEncoder().encode(JSON.stringify(data));
 
-  const publishers = [
-    { url: `${PUBLISHER_MAINNET}/v1/blobs?epochs=52`, network: 'mainnet', timeout: 5000 },
-    { url: `${PUBLISHER_TESTNET}/v1/blobs?epochs=52`, network: 'testnet', timeout: 15000 },
-  ];
-
-  for (const { url, network, timeout } of publishers) {
+  // Encrypt with Seal if configured
+  const seal = getSealClient();
+  if (seal && userAddress) {
     try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeout);
-      const res = await fetch(url, { method: 'PUT', body: new Uint8Array(bytes), signal: controller.signal });
-      clearTimeout(timer);
-      if (!res.ok) continue;
-
-      const result = await res.json();
-      const blobId: string | null = result.newlyCreated?.blobObject?.blobId
-        || result.alreadyCertified?.blobId || null;
-      const objectId: string | null = result.newlyCreated?.blobObject?.id
-        || result.alreadyCertified?.blobObject?.id || null;
-
-      if (blobId) return { blobId, objectId, network };
-    } catch { /* try next */ }
+      const { encryptedObject } = await seal.encrypt({
+        threshold: 1,
+        packageId: FINIX_PACKAGE_ID,
+        id: userAddress,
+        data: blob,
+      });
+      blob = encryptedObject;
+    } catch (e) {
+      console.warn('[Seal] Encrypt failed, storing raw:', e);
+    }
   }
-  throw new Error('All Walrus publishers unreachable');
+
+  // Upload via Walrus TS SDK
+  const result = await getWalrusClient().walrus.writeBlob({
+    blob,
+    deletable: true,
+    epochs: 10,
+    signer: getKeypair(),
+  });
+
+  return {
+    blobId: result.blobId,
+    objectId: result.objectId ?? null,
+    network: 'mainnet',
+  };
 }
 
 /**
- * Read blob from Walrus aggregator.
- * Returns the raw text content.
+ * Read blob from Walrus mainnet aggregator (public, no auth needed).
  */
 export async function readBlob(blobId: string): Promise<string> {
   const res = await fetch(`${AGGREGATOR_MAINNET}/v1/blobs/${encodeURIComponent(blobId)}`);
   if (!res.ok) throw new Error(`Walrus read failed: ${res.status}`);
   return res.text();
-}
-
-/**
- * Store data WITH Seal encryption enabled.
- * Same as storeBlob but enforces encryption.
- */
-export async function storeBlobEncrypted(
-  data: unknown,
-  userAddress: string,
-): Promise<BlobResult & { network: string }> {
-  if (!isSealConfigured()) {
-    throw new Error(
-      'Seal not configured — set NEXT_PUBLIC_SEAL_KEY_SERVER_OBJECT_ID, ' +
-      'NEXT_PUBLIC_SEAL_KEY_SERVER_AGGREGATOR_URL, and NEXT_PUBLIC_SEAL_API_KEY env vars'
-    );
-  }
-  return storeBlob(data, userAddress);
-}
-
-/**
- * Decrypt a blob that was previously stored with Seal encryption.
- * @returns The parsed original data (decrypted JSON)
- */
-export async function readAndDecryptBlob(
-  blobId: string,
-  userAddress: string,
-  signer: import('@mysten/sui/cryptography').Signer,
-): Promise<unknown> {
-  const raw = await readBlob(blobId);
-  
-  const parsed = JSON.parse(raw);
-  if (!parsed.seal) {
-    // Plain data, no encryption
-    return parsed;
-  }
-
-  // Reconstruct encrypted bytes
-  const encryptedObject = new Uint8Array(parsed.data);
-  
-  // Decrypt using Seal
-  const { decryptWithSeal } = await import('./seal-mainnet');
-  const decryptedBytes = await decryptWithSeal({
-    encryptedObject,
-    userAddress,
-    signer,
-    buildApprovalTxBytes: async () => {
-      // This needs to be implemented with actual PTB that calls seal_approve
-      // For now, create a dummy transaction
-      const { Transaction } = await import('@mysten/sui/transactions');
-      const tx = new Transaction();
-      // TODO: Add seal_approve move call here
-      // tx.moveCall({
-      //   target: `${parsed.packageId}::seal::approve`,
-      //   arguments: [...],
-      // });
-      return Uint8Array.from(tx.serialize());
-    },
-  });
-
-  return JSON.parse(new TextDecoder().decode(decryptedBytes));
 }

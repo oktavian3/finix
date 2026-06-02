@@ -230,7 +230,7 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
         registerWalrusSnapshot({
           blobId: newBlobId,
           objectId: result.objectId || null,
-          network: result.network === 'testnet' ? 'testnet' : 'mainnet',
+          network: 'mainnet',
         });
         localStorage.setItem(`finix_cache_${walletAddress}`, JSON.stringify(data));
       } else {

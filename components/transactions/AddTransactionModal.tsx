@@ -47,7 +47,7 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
   const [isSaving, setIsSaving] = useState(false);
   const [successBlobId, setSuccessBlobId] = useState<string | null>(null);
   const [successObjectId, setSuccessObjectId] = useState<string | null>(null);
-  const [successNetwork, setSuccessNetwork] = useState<'mainnet' | 'testnet'>('mainnet');
+  
 
   const reset = () => {
     setStep(1);
@@ -98,13 +98,11 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
       if (res.ok) {
         const result = await res.json();
         if (result.success && result.blobId) {
-          const network = result.network === 'testnet' ? 'testnet' : 'mainnet';
+          const network = 'mainnet';
           registerWalrusSnapshot({ blobId: result.blobId, objectId: result.objectId || null, network });
           setSuccessBlobId(result.blobId);
           setSuccessObjectId(result.objectId || null);
-          setSuccessNetwork(network);
-          const label = result.network === 'mainnet' ? 'Sui Mainnet' : 'Sui Testnet';
-          showToast('success', `Transaction saved to Walrus on ${label}`);
+          showToast('success', 'Transaction saved to Walrus on Sui Mainnet');
           setIsSaving(false);
           return;
         }
@@ -121,7 +119,6 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
         });
         setSuccessBlobId(httpResult.blobId);
         setSuccessObjectId(httpResult.objectId || null);
-        setSuccessNetwork(httpResult.network);
         const networkLabel = httpResult.network === 'mainnet' ? 'Sui Mainnet' : 'Sui Testnet';
         showToast('success', `Transaction saved to Walrus on ${networkLabel}`);
       } else {
@@ -290,7 +287,7 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
               <Button
                 disabled={!successObjectId}
                 onClick={() => successObjectId && window.open(
-                  `${successNetwork === 'testnet' ? 'https://suiscan.xyz/testnet/object' : 'https://suiscan.xyz/mainnet/object'}/${successObjectId}`,
+                  `https://suiscan.xyz/mainnet/object/${successObjectId}`,
                   '_blank',
                   'noopener,noreferrer'
                 )}
