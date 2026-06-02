@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { storeBlob, getBlob } from '@/lib/walrus-sdk';
+import { storeBlob } from '@/lib/walrus-mainnet';
+import { readBlob } from '@/lib/walrus-mainnet';
 
-/** Store Finix financial records/snapshots on Walrus via server-side signing. */
+/** Store Finix financial records on Walrus (mainnet prefer, testnet fallback). */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -11,13 +12,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'data is required' }, { status: 400 });
     }
 
-    console.log('[Walrus API] storing Finix snapshot', {
-      wallet: walletAddress ? `${String(walletAddress).slice(0, 6)}...${String(walletAddress).slice(-4)}` : 'unknown',
-      transactions: Array.isArray(data?.transactions) ? data.transactions.length : 0,
-      goals: Array.isArray(data?.goals) ? data.goals.length : 0,
-    });
     const result = await storeBlob(data);
-    console.log('[Walrus API] success:', result.blobId, result.objectId);
 
     return NextResponse.json({
       success: true,
@@ -43,8 +38,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'blobId query param is required' }, { status: 400 });
     }
 
-    const data = await getBlob(blobId);
-    return NextResponse.json({ success: true, data });
+    const data = await readBlob(blobId);
+    const parsed = JSON.parse(data);
+    return NextResponse.json({ success: true, data: parsed });
   } catch (error) {
     console.error('[Walrus API GET] error:', error);
     const msg = error instanceof Error ? error.message : 'Failed to read blob';
