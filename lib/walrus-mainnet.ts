@@ -34,9 +34,14 @@ let _sealClient: SealClient | null = null;
 
 function getKeypair(): Ed25519Keypair {
   if (!_keypair) {
-    const pk = process.env.SUI_PRIVATE_KEY;
-    if (!pk) throw new Error('SUI_PRIVATE_KEY not set');
-    _keypair = Ed25519Keypair.fromSecretKey(Uint8Array.from(Buffer.from(pk, 'hex')));
+    const mn = process.env.SUI_MNEMONIC;
+    if (mn) {
+      _keypair = Ed25519Keypair.deriveKeypair(mn);
+    } else {
+      const pk = process.env.SUI_PRIVATE_KEY;
+      if (!pk) throw new Error('SUI_PRIVATE_KEY or SUI_MNEMONIC not set');
+      _keypair = Ed25519Keypair.fromSecretKey(Uint8Array.from(Buffer.from(pk, 'hex')));
+    }
   }
   return _keypair;
 }
