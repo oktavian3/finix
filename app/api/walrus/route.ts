@@ -12,13 +12,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'data is required' }, { status: 400 });
     }
 
-    const result = await storeBlob(data);
+    const result = await storeBlob(data, walletAddress);
 
     return NextResponse.json({
       success: true,
       blobId: result.blobId,
       objectId: result.objectId,
       network: result.network,
+      sealEnabled: !!process.env.NEXT_PUBLIC_SEAL_KEY_SERVER_OBJECT_ID,
       message: `Finix records saved to Walrus ${result.network}`,
     });
   } catch (error) {
