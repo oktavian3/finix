@@ -28,8 +28,7 @@ import type { ClientWithExtensions, CoreClient } from '@mysten/sui/client';
 const MAINNET_RPC = process.env.NEXT_PUBLIC_SUI_RPC || 'https://fullnode.mainnet.sui.io:443';
 
 // Package ID for the Finix Move contract (needed for Seal identity)
-const FINIX_PACKAGE_ID = process.env.NEXT_PUBLIC_FINIX_PACKAGE_ID;
-if (!FINIX_PACKAGE_ID) throw new Error('NEXT_PUBLIC_FINIX_PACKAGE_ID not set');
+const FINIX_PACKAGE_ID = process.env.NEXT_PUBLIC_FINIX_PACKAGE_ID || '0x049434ca3eea8de574639ea521a27ec37d4abfac1a0393aa729b7c8ca8e58d96';
 
 // Key server config for Seal
 // Get from env or use placeholders — user needs to provide key server info

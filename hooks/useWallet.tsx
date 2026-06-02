@@ -136,7 +136,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         createClient={createTatumSuiClient}
       >
         <DappKitWalletProvider
-          autoConnect={false}
+          autoConnect={true}
           slushWallet={{ name: 'Slush' }}
         >
           <WalletInner>

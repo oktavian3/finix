@@ -51,26 +51,69 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
   const [objectId, setObjectId] = useState<string | null>(null);
   const [walrusNetwork, setWalrusNetwork] = useState<'mainnet' | 'testnet' | null>(null);
   const currentAccount = useCurrentAccount();
-  const initialized = useRef(false);
+  const initializedRef = useRef<Record<string, boolean>>({});
+  const prevAddrRef = useRef<string | null>(null);
 
   const currentMonth = new Date().toISOString().slice(0, 7);
   const currentSummary = data ? computeMonthlySummary(data, currentMonth) : emptySummary();
   const allSummaries = data ? computeAllSummaries(data) : [];
 
-  // Auto-detect wallet from dapp-kit context
+  // --- Wallet auto-detect + data loading (runs when wallet changes) ---
   useEffect(() => {
-    if (!currentAccount?.address) return;
-    if (initialized.current && walletAddress === currentAccount.address) return;
+    const addr = currentAccount?.address ?? null;
+    const prev = prevAddrRef.current;
+    prevAddrRef.current = addr;
 
-    initialized.current = true;
-    const addr = currentAccount.address;
+    if (addr === null) {
+      // Wallet disconnected or not yet loaded — don't wipe data if we just had it
+      // Only wipe if this is a genuine disconnect (not initial load)
+      if (prev !== null) {
+        setWalletAddress(null);
+        setIsConnected(false);
+        setData(null);
+        setBlobId(null);
+        setObjectId(null);
+        setWalrusNetwork(null);
+      }
+      return;
+    }
+
+    // If same address already loaded, skip
+    if (initializedRef.current[addr]) return;
+
+    initializedRef.current[addr] = true;
     setWalletAddress(addr);
     setIsConnected(true);
     setIsLoading(true);
 
     const loadData = async () => {
       try {
-        // Priority 1: local cache
+        // Try Walrus blob first (for persisting across devices)
+        const savedBlobId = localStorage.getItem(blobIdKey(addr));
+        if (savedBlobId) {
+          setBlobId(savedBlobId);
+          setObjectId(localStorage.getItem(objectIdKey(addr)));
+          const savedNetwork = localStorage.getItem(walrusNetworkKey(addr));
+          setWalrusNetwork(savedNetwork === 'testnet' ? 'testnet' : 'mainnet');
+          try {
+            const res = await fetch(`/api/walrus?blobId=${encodeURIComponent(savedBlobId)}`);
+            if (res.ok) {
+              const result = await res.json();
+              if (result.success && result.data) {
+                const withAchievements = {
+                  ...result.data,
+                  achievements: checkAchievements(result.data),
+                };
+                setData(withAchievements);
+                localStorage.setItem(`finix_cache_${addr}`, JSON.stringify(withAchievements));
+                setIsLoading(false);
+                return;
+              }
+            }
+          } catch { /* fall through to local cache */ }
+        }
+
+        // Fallback: local cache
         const cached = localStorage.getItem(`finix_cache_${addr}`);
         if (cached) {
           try {
@@ -83,24 +126,7 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
           } catch { /* ignore */ }
         }
 
-        // Priority 2: Walrus blob
-        const savedBlobId = localStorage.getItem(blobIdKey(addr));
-        if (savedBlobId) {
-          setBlobId(savedBlobId);
-          setObjectId(localStorage.getItem(objectIdKey(addr)));
-          const savedNetwork = localStorage.getItem(walrusNetworkKey(addr));
-          setWalrusNetwork(savedNetwork === 'testnet' ? 'testnet' : 'mainnet');
-          const res = await fetch(`/api/walrus?blobId=${encodeURIComponent(savedBlobId)}`);
-          const result = await res.json();
-          if (result.success && result.data) {
-            setData(result.data as FinixUserData);
-            localStorage.setItem(`finix_cache_${addr}`, JSON.stringify(result.data));
-            setIsLoading(false);
-            return;
-          }
-        }
-
-        // New user
+        // New user — empty state
         setData(createEmptyUserData(addr));
       } catch {
         setData(createEmptyUserData(addr));
@@ -112,7 +138,7 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
     loadData();
   }, [currentAccount?.address]);
 
-  // Check streak expiry: if lastActiveDate > 24 hours ago, reset streak
+  // --- Streak check ---
   useEffect(() => {
     if (!data || !walletAddress) return;
     const lastActive = data.streaks.lastActiveDate;
@@ -124,7 +150,6 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
     const diffHours = diffMs / (1000 * 60 * 60);
 
     if (diffHours > 36) {
-      // More than 36 hours since last activity — reset streak
       const updated = {
         ...data,
         streaks: {
@@ -135,17 +160,19 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
       setData(updated);
       localStorage.setItem(`finix_cache_${walletAddress}`, JSON.stringify(updated));
     }
-  }, [walletAddress]); // runs on wallet connect
+  }, [walletAddress]);
 
   const disconnectWallet = useCallback(() => {
-    initialized.current = false;
+    if (walletAddress) {
+      delete initializedRef.current[walletAddress];
+    }
     setWalletAddress(null);
     setIsConnected(false);
     setData(null);
     setBlobId(null);
     setObjectId(null);
     setWalrusNetwork(null);
-  }, []);
+  }, [walletAddress]);
 
   const registerWalrusSnapshot = useCallback((snapshot: { blobId: string; objectId?: string | null; network?: 'mainnet' | 'testnet' }) => {
     if (!walletAddress) return;
@@ -162,13 +189,11 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
   }, [walletAddress]);
 
   const updateData = useCallback((newData: FinixUserData) => {
-    // Always re-check achievements on any data update
     const withAchievements = {
       ...newData,
       achievements: checkAchievements(newData),
     };
     setData(withAchievements);
-    // Cache locally for quick reload
     if (walletAddress) {
       localStorage.setItem(`finix_cache_${walletAddress}`, JSON.stringify(withAchievements));
     }
@@ -180,9 +205,11 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
     if (savedBlobId) {
       try {
         const res = await fetch(`/api/walrus?blobId=${encodeURIComponent(savedBlobId)}`);
-        const result = await res.json();
-        if (result.success && result.data) {
-          setData(result.data as FinixUserData);
+        if (res.ok) {
+          const result = await res.json();
+          if (result.success && result.data) {
+            setData(result.data as FinixUserData);
+          }
         }
       } catch { /* ignore */ }
     }
@@ -192,7 +219,6 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
     if (!data || !walletAddress) return;
     setIsSaving(true);
     try {
-      // Save to Walrus via API (server-side signing with Taotie/aggregator)
       const res = await fetch('/api/walrus', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -206,14 +232,12 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
           objectId: result.objectId || null,
           network: result.network === 'testnet' ? 'testnet' : 'mainnet',
         });
-        // Update cached copy
         localStorage.setItem(`finix_cache_${walletAddress}`, JSON.stringify(data));
       } else {
         throw new Error(result.error || 'Save failed');
       }
     } catch (err) {
       console.error('Walrus save error:', err);
-      // Fallback: save to localStorage at least
       localStorage.setItem(`finix_cache_${walletAddress}`, JSON.stringify(data));
       throw err;
     } finally {
@@ -221,7 +245,7 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
     }
   }, [data, registerWalrusSnapshot, walletAddress]);
 
-  // Auto-save on data changes (debounced)
+  // Debounced auto-save to local cache
   useEffect(() => {
     if (!isConnected || !data || !walletAddress) return;
     const timer = setTimeout(() => {
@@ -234,12 +258,8 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
     <FinixDataContext.Provider value={{
       data: data || createEmptyUserData(walletAddress || '0xunknown'),
       isLoading, isConnected, walletAddress,
-      connectWallet: async (addr: string) => {
-        // Backward compat — just re-trigger the auto-detect by clearing and waiting
-        initialized.current = false;
-        setWalletAddress(null);
-        setIsConnected(false);
-        // The useEffect on currentAccount will re-fire
+      connectWallet: async (_addr: string) => {
+        // dapp-kit auto-connect handles this
       }, disconnectWallet, updateData, refreshData,
       currentSummary, allSummaries, currentMonth,
       saveToWalrus, isSaving, blobId, objectId, walrusNetwork, registerWalrusSnapshot,
