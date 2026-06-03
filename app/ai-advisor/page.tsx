@@ -145,7 +145,7 @@ export default function AiAdvisorPage() {
             <div>
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-bold text-white/70">
                 <Sparkles size={14} />
-                DeepSeek advisor
+                AI Advisor
               </div>
               <h2 className="max-w-[680px] text-3xl font-black leading-tight tracking-tight sm:text-4xl lg:text-5xl">AI Advisor Command Center</h2>
               <p className="mt-4 max-w-[620px] text-sm leading-7 text-white/65 sm:text-base">Get concise English insights from monthly summaries, categories, goals, and trend data.</p>
@@ -270,7 +270,7 @@ export default function AiAdvisorPage() {
                   Regenerate
                 </button>
               )}
-              <span className="text-2xs text-[#9CA3AF]">DeepSeek</span>
+              <span className="text-2xs text-[#9CA3AF]">AI</span>
             </div>
           </div>
           <div className="p-5 min-h-[200px]">

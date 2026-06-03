@@ -135,7 +135,6 @@ const footerProductLinks = [
 ];
 
 const footerResourceLinks = [
-  { label: "Documentation", href: "https://github.com/oktavian3/finix", external: true },
   { label: "Sui Network", href: "https://sui.io", external: true },
   { label: "Walrus Storage", href: "https://www.walrus.xyz", external: true },
 ];
