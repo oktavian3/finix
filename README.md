@@ -1,6 +1,26 @@
 # Finix
 
-Finix is a wallet-native personal finance app for the Sui ecosystem. Users connect a Sui wallet, create their own income and expense records, track goals, review analytics, and sync app data through Walrus storage.
+> **Live demo:** [finix-one.vercel.app](https://finix-one.vercel.app)
+
+<p align="center">
+  <a href="https://finix-one.vercel.app">
+    <img src="public/favicon.svg" width="48" height="48" alt="Finix logo">
+  </a>
+</p>
+
+<div align="center">
+
+[![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=next.js)](https://nextjs.org/)
+[![Sui](https://img.shields.io/badge/Sui-Testnet-4DA2FF?logo=react)](https://sui.io/)
+[![Walrus](https://img.shields.io/badge/Walrus-Storage-FF6B6B)]()
+[![Tatum](https://img.shields.io/badge/Tatum-RPC-0088CC)]()
+[![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript)]()
+
+</div>
+
+**Finix** is a wallet-native personal finance tracker on **Sui Network**. Connect your Sui wallet → track income/expenses → set savings goals → get AI-powered insights. All data stored on **Walrus** — permanent, verifiable, user-owned.
+
+No signup. No email. Just your wallet.
 
 ## Hackathon Requirements Covered
 
