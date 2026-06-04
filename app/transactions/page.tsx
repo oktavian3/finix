@@ -114,7 +114,7 @@ export default function TransactionsPage() {
               Wallet records
             </div>
             <h2 className="text-3xl font-black leading-tight tracking-tight sm:text-5xl">Your transaction ledger starts clean.</h2>
-            <p className="mt-5 max-w-2xl text-sm leading-7 text-white/65 sm:text-base">Connect your Sui wallet to add income and expenses, then sync your Finix records to Walrus testnet.</p>
+            <p className="mt-5 max-w-2xl text-sm leading-7 text-white/65 sm:text-base">Connect your Sui wallet to add income and expenses, then sync your Finix records to Walrus Mainnet.</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <button
                 onClick={connect}

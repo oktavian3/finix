@@ -1,64 +1,93 @@
 /**
- * Walrus — HTTP Publisher client (works for both testnet & mainnet).
- * Falls back gracefully.
+ * Walrus — strict Mainnet HTTP Publisher/Aggregator client.
+ *
+ * Finix production must never fall back to Testnet. Configure a Mainnet
+ * publisher in Vercel with WALRUS_PUBLISHER_URL when using a private or
+ * authenticated publisher. WALRUS_PUBLISHER_AUTH_TOKEN is optional for
+ * bearer-token protected publishers.
  */
 
-const PUBLISHER_MAINNET = 'https://publisher.walrus.space';
-const PUBLISHER_TESTNET = 'https://publisher.walrus-testnet.walrus.space';
-const AGGREGATOR_MAINNET = 'https://aggregator.walrus-mainnet.walrus.space';
-const AGGREGATOR_TESTNET = 'https://aggregator.walrus-testnet.walrus.space';
+const DEFAULT_PUBLISHER_MAINNET = 'https://publisher.walrus.space';
+const DEFAULT_AGGREGATOR_MAINNET = 'https://aggregator.walrus-mainnet.walrus.space';
+const DEFAULT_EPOCHS = 52;
 
 export interface StoreResult {
   blobId: string;
   objectId: string | null;
-  network: 'mainnet' | 'testnet';
+  network: 'mainnet';
+}
+
+function assertMainnetUrl(name: string, url: string): void {
+  const normalized = url.toLowerCase();
+  if (normalized.includes('testnet') || normalized.includes('devnet') || normalized.includes('localnet')) {
+    throw new Error(`${name} must point to Walrus mainnet`);
+  }
+}
+
+function getPublisherUrl(): string {
+  const url = process.env.WALRUS_PUBLISHER_URL
+    || process.env.NEXT_PUBLIC_WALRUS_PUBLISHER_URL
+    || DEFAULT_PUBLISHER_MAINNET;
+  assertMainnetUrl('WALRUS_PUBLISHER_URL', url);
+  return url.replace(/\/$/, '');
+}
+
+function getAggregatorUrl(): string {
+  const url = process.env.WALRUS_AGGREGATOR_URL
+    || process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR_URL
+    || DEFAULT_AGGREGATOR_MAINNET;
+  assertMainnetUrl('WALRUS_AGGREGATOR_URL', url);
+  return url.replace(/\/$/, '');
+}
+
+function getEpochs(): number {
+  const raw = process.env.WALRUS_EPOCHS || process.env.NEXT_PUBLIC_WALRUS_EPOCHS;
+  if (!raw) return DEFAULT_EPOCHS;
+
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    throw new Error('WALRUS_EPOCHS must be a positive integer');
+  }
+  return parsed;
+}
+
+function getAuthHeaders(): HeadersInit {
+  const token = process.env.WALRUS_PUBLISHER_AUTH_TOKEN
+    || process.env.WALRUS_PUBLISHER_BEARER_TOKEN;
+
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+function toBytes(data: unknown): Uint8Array {
+  if (data instanceof Uint8Array) return data;
+  if (typeof data === 'string') return new TextEncoder().encode(data);
+  return new TextEncoder().encode(JSON.stringify(data));
 }
 
 /**
- * Store data on Walrus via HTTP Publisher.
- * Tries mainnet first (5s timeout), falls back to testnet.
- * Data is serialized as JSON, not encrypted.
- * ⚠️ Walrus blobs are public — don't store raw passwords/keys.
+ * Store encrypted data on Walrus Mainnet via HTTP Publisher.
+ *
+ * Walrus blobs are public. Callers must encrypt sensitive finance data before
+ * calling this function.
  */
-export async function storeBlobViaHTTP(
-  data: unknown,
-): Promise<StoreResult> {
-  const bytes = new TextEncoder().encode(
-    typeof data === 'string' ? data : JSON.stringify(data),
-  );
+export async function storeBlobViaHTTP(data: unknown): Promise<StoreResult> {
+  const bytes = toBytes(data);
+  const publisherUrl = getPublisherUrl();
+  const epochs = getEpochs();
 
-  // Try mainnet first (aggressive timeout)
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 5000);
-    const res = await fetch(`${PUBLISHER_MAINNET}/v1/blobs?epochs=52`, {
-      method: 'PUT',
-      body: bytes,
-      signal: controller.signal,
-    });
-    clearTimeout(timer);
-    if (res.ok) {
-      const result = await res.json();
-      const blobId = result.newlyCreated?.blobObject?.blobId
-        || result.alreadyCertified?.blobId;
-      const objectId = result.newlyCreated?.blobObject?.id
-        || result.alreadyCertified?.blobObject?.id;
-      if (blobId) return { blobId, objectId: objectId || null, network: 'mainnet' };
-    }
-  } catch { /* fallback to testnet */ }
-
-  // Fallback to testnet
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 20000);
-  const res = await fetch(`${PUBLISHER_TESTNET}/v1/blobs?epochs=52`, {
+  const res = await fetch(`${publisherUrl}/v1/blobs?epochs=${epochs}`, {
     method: 'PUT',
-    body: bytes,
-    signal: controller.signal,
+    body: new Blob([bytes as BlobPart]),
+    headers: {
+      'Content-Type': 'application/octet-stream',
+      ...getAuthHeaders(),
+    },
+    signal: AbortSignal.timeout(20_000),
   });
-  clearTimeout(timer);
+
   if (!res.ok) {
     const text = await res.text().catch(() => 'unknown');
-    throw new Error(`Walrus HTTP Publisher failed: ${res.status} ${text}`);
+    throw new Error(`Walrus Mainnet HTTP Publisher failed: ${res.status} ${text}`);
   }
 
   const result = await res.json();
@@ -66,26 +95,22 @@ export async function storeBlobViaHTTP(
     || result.alreadyCertified?.blobId;
   const objectId = result.newlyCreated?.blobObject?.id
     || result.alreadyCertified?.blobObject?.id;
-  if (!blobId) throw new Error('No blobId in Walrus response');
 
-  return { blobId, objectId: objectId || null, network: 'testnet' };
+  if (!blobId) throw new Error('No blobId in Walrus Mainnet response');
+
+  return { blobId, objectId: objectId || null, network: 'mainnet' };
 }
 
-/**
- * Read blob from Walrus aggregator.
- * Tries mainnet first, falls back to testnet.
- */
-export async function readBlobViaHTTP(blobId: string): Promise<string> {
-  for (const baseUrl of [AGGREGATOR_MAINNET, AGGREGATOR_TESTNET]) {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 10000);
-      const res = await fetch(`${baseUrl}/v1/blobs/${encodeURIComponent(blobId)}`, {
-        signal: controller.signal,
-      });
-      clearTimeout(timer);
-      if (res.ok) return res.text();
-    } catch { /* try next */ }
+/** Read encrypted blob bytes from the Walrus Mainnet aggregator. */
+export async function readBlobViaHTTP(blobId: string): Promise<Uint8Array> {
+  const aggregatorUrl = getAggregatorUrl();
+  const res = await fetch(`${aggregatorUrl}/v1/blobs/${encodeURIComponent(blobId)}`, {
+    signal: AbortSignal.timeout(10_000),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Walrus Mainnet blob ${blobId} not found: ${res.status} ${res.statusText}`);
   }
-  throw new Error(`Walrus blob ${blobId} not found on any network`);
+
+  return new Uint8Array(await res.arrayBuffer());
 }

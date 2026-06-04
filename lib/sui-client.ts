@@ -1,5 +1,11 @@
-const TATUM_RPC_URL: string = process.env.NEXT_PUBLIC_TATUM_RPC_URL || 'https://sui-testnet.gateway.tatum.io';
+const TATUM_RPC_URL: string = process.env.NEXT_PUBLIC_TATUM_MAINNET_RPC_URL
+  || process.env.NEXT_PUBLIC_TATUM_RPC_URL
+  || 'https://sui-mainnet.gateway.tatum.io';
 const TATUM_API_KEY: string = process.env.NEXT_PUBLIC_TATUM_API_KEY || '';
+
+if (TATUM_RPC_URL.toLowerCase().includes('testnet') || TATUM_RPC_URL.toLowerCase().includes('devnet') || TATUM_RPC_URL.toLowerCase().includes('localnet')) {
+  throw new Error('Sui RPC URL must point to Sui mainnet');
+}
 
 /* eslint-disable */
 let CoreClientCtor: any;

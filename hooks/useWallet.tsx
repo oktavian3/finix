@@ -12,17 +12,25 @@ import {
   createNetworkConfig,
 } from '@mysten/dapp-kit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { getJsonRpcFullnodeUrl, SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
+import { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
 
-// Testnet-first wallet config. This matches the previously working hackathon flow.
-const TATUM_RPC_URL = process.env.NEXT_PUBLIC_TATUM_RPC_URL || 'https://sui-testnet.gateway.tatum.io';
+// Mainnet-only wallet config. Production must never fall back to Testnet/Devnet.
+const TATUM_RPC_URL = process.env.NEXT_PUBLIC_TATUM_MAINNET_RPC_URL
+  || process.env.NEXT_PUBLIC_TATUM_RPC_URL
+  || 'https://sui-mainnet.gateway.tatum.io';
 const TATUM_API_KEY = process.env.NEXT_PUBLIC_TATUM_API_KEY || '';
-const SUI_NETWORK = process.env.NEXT_PUBLIC_SUI_NETWORK || 'testnet';
+const SUI_NETWORK = process.env.NEXT_PUBLIC_SUI_NETWORK || 'mainnet';
+
+if (SUI_NETWORK !== 'mainnet') {
+  throw new Error('Finix is configured for strict Sui mainnet only');
+}
+
+if (TATUM_RPC_URL.toLowerCase().includes('testnet') || TATUM_RPC_URL.toLowerCase().includes('devnet') || TATUM_RPC_URL.toLowerCase().includes('localnet')) {
+  throw new Error('Tatum RPC URL must point to Sui mainnet');
+}
 
 const { networkConfig } = createNetworkConfig({
-  mainnet: { url: process.env.NEXT_PUBLIC_TATUM_MAINNET_RPC_URL || 'https://sui-mainnet.gateway.tatum.io', network: 'mainnet' },
-  testnet: { url: TATUM_RPC_URL || getJsonRpcFullnodeUrl('testnet'), network: 'testnet' },
-  devnet: { url: getJsonRpcFullnodeUrl('devnet'), network: 'devnet' },
+  mainnet: { url: TATUM_RPC_URL, network: 'mainnet' },
 });
 
 const queryClient = new QueryClient();

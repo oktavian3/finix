@@ -1,21 +1,33 @@
 /**
- * Walrus SDK - server-side blob storage on Walrus testnet.
- * This restores the previously working testnet flow while the UI remains updated.
+ * Walrus SDK - server-side blob storage on Walrus Mainnet.
  *
- * Required env: SUI_PRIVATE_KEY (suiprivkey format)
+ * The app currently uses the HTTP Publisher path in /api/walrus. This SDK
+ * helper is kept Mainnet-only for future direct SDK writes with SUI_PRIVATE_KEY.
  */
 import { WalrusClient } from '@mysten/walrus';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
 
-const TESTNET_RPC = process.env.NEXT_PUBLIC_TATUM_RPC_URL || 'https://sui-testnet.gateway.tatum.io';
+const MAINNET_RPC = process.env.NEXT_PUBLIC_TATUM_MAINNET_RPC_URL
+  || process.env.NEXT_PUBLIC_TATUM_RPC_URL
+  || 'https://sui-mainnet.gateway.tatum.io';
 const TATUM_API_KEY = process.env.NEXT_PUBLIC_TATUM_API_KEY || '';
-const AGGREGATOR_URL = 'https://aggregator.walrus-testnet.walrus.space';
+const AGGREGATOR_URL = process.env.WALRUS_AGGREGATOR_URL
+  || process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR_URL
+  || 'https://aggregator.walrus-mainnet.walrus.space';
+
+if (MAINNET_RPC.toLowerCase().includes('testnet') || MAINNET_RPC.toLowerCase().includes('devnet') || MAINNET_RPC.toLowerCase().includes('localnet')) {
+  throw new Error('Walrus SDK Sui RPC must point to mainnet');
+}
+
+if (AGGREGATOR_URL.toLowerCase().includes('testnet') || AGGREGATOR_URL.toLowerCase().includes('devnet') || AGGREGATOR_URL.toLowerCase().includes('localnet')) {
+  throw new Error('Walrus SDK aggregator must point to mainnet');
+}
 
 interface WalrusStoreResult {
   blobId: string;
   objectId: string | null;
-  network: 'testnet';
+  network: 'mainnet';
 }
 
 let _client: WalrusClient | null = null;
@@ -29,11 +41,11 @@ function getKeypair(): Ed25519Keypair {
 function getClient(): WalrusClient {
   if (!_client) {
     _client = new WalrusClient({
-      network: 'testnet',
+      network: 'mainnet',
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       suiClient: new SuiJsonRpcClient({
-        url: TESTNET_RPC,
-        network: 'testnet',
+        url: MAINNET_RPC,
+        network: 'mainnet',
         fetch: (input: RequestInfo | URL, init?: RequestInit): Promise<Response> =>
           fetch(input, {
             ...init,
@@ -55,13 +67,14 @@ export async function storeBlob(data: unknown): Promise<WalrusStoreResult> {
 
   const blob = typeof data === 'string' ? data : JSON.stringify(data);
   const bytes = new TextEncoder().encode(blob);
+  const epochs = Number.parseInt(process.env.WALRUS_EPOCHS || '52', 10);
 
-  console.log(`[WalrusSDK] storing Finix snapshot size=${bytes.length} via Walrus testnet`);
+  console.log(`[WalrusSDK] storing Finix snapshot size=${bytes.length} via Walrus mainnet`);
 
   const result = await client.writeBlob({
     blob: bytes,
     signer,
-    epochs: 52,
+    epochs,
     deletable: false,
   });
 
@@ -70,12 +83,12 @@ export async function storeBlob(data: unknown): Promise<WalrusStoreResult> {
   return {
     blobId: result.blobId,
     objectId: result.blobObject?.id ?? null,
-    network: 'testnet',
+    network: 'mainnet',
   };
 }
 
 export async function getBlob(blobId: string): Promise<unknown> {
-  const url = `${AGGREGATOR_URL}/v1/blobs/${encodeURIComponent(blobId)}`;
+  const url = `${AGGREGATOR_URL.replace(/\/$/, '')}/v1/blobs/${encodeURIComponent(blobId)}`;
   console.log(`[WalrusSDK] reading blob from ${url}`);
 
   const res = await fetch(url);

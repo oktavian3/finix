@@ -22,8 +22,8 @@ interface FinixDataContextType {
   isSaving: boolean;
   blobId: string | null;
   objectId: string | null;
-  walrusNetwork: 'mainnet' | 'testnet' | null;
-  registerWalrusSnapshot: (snapshot: { blobId: string; objectId?: string | null; network?: 'mainnet' | 'testnet' }) => void;
+  walrusNetwork: 'mainnet' | null;
+  registerWalrusSnapshot: (snapshot: { blobId: string; objectId?: string | null; network?: 'mainnet' }) => void;
 }
 
 const FinixDataContext = createContext<FinixDataContextType | null>(null);
@@ -49,7 +49,7 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
   const [isSaving, setIsSaving] = useState(false);
   const [blobId, setBlobId] = useState<string | null>(null);
   const [objectId, setObjectId] = useState<string | null>(null);
-  const [walrusNetwork, setWalrusNetwork] = useState<'mainnet' | 'testnet' | null>(null);
+  const [walrusNetwork, setWalrusNetwork] = useState<'mainnet' | null>(null);
   const currentAccount = useCurrentAccount();
   const initializedRef = useRef<Record<string, boolean>>({});
   const prevAddrRef = useRef<string | null>(null);
@@ -112,7 +112,7 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
           const networkIsMainnet = savedNetwork === 'mainnet';
           setWalrusNetwork(networkIsMainnet ? 'mainnet' : null);
           try {
-            const res = await fetch(`/api/walrus?blobId=${encodeURIComponent(savedBlobId)}`);
+            const res = await fetch(`/api/walrus?blobId=${encodeURIComponent(savedBlobId)}&walletAddress=${encodeURIComponent(addr)}`);
             if (res.ok) {
               const result = await res.json();
               if (result.success && result.data) {
@@ -203,7 +203,7 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
     setWalrusNetwork(null);
   }, [walletAddress]);
 
-  const registerWalrusSnapshot = useCallback((snapshot: { blobId: string; objectId?: string | null; network?: 'mainnet' | 'testnet' }) => {
+  const registerWalrusSnapshot = useCallback((snapshot: { blobId: string; objectId?: string | null; network?: 'mainnet' }) => {
     if (!walletAddress) return;
     setBlobId(snapshot.blobId);
     setObjectId(snapshot.objectId || null);
@@ -233,7 +233,7 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
     const savedBlobId = localStorage.getItem(blobIdKey(walletAddress));
     if (savedBlobId) {
       try {
-        const res = await fetch(`/api/walrus?blobId=${encodeURIComponent(savedBlobId)}`);
+        const res = await fetch(`/api/walrus?blobId=${encodeURIComponent(savedBlobId)}&walletAddress=${encodeURIComponent(walletAddress)}`);
         if (res.ok) {
           const result = await res.json();
           if (result.success && result.data) {

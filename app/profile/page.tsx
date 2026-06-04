@@ -127,7 +127,7 @@ export default function ProfilePage() {
               Account workspace
             </div>
             <h2 className="max-w-[680px] text-3xl font-black leading-tight tracking-tight sm:text-4xl lg:text-5xl">Profile Command Center</h2>
-            <p className="mt-4 max-w-[620px] text-sm leading-7 text-white/65 sm:text-base">Manage display preferences, export records, and verify your latest Walrus testnet sync.</p>
+            <p className="mt-4 max-w-[620px] text-sm leading-7 text-white/65 sm:text-base">Manage display preferences, export records, and verify your latest Walrus Mainnet sync.</p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <button
                 onClick={handleSaveProfile}
@@ -157,7 +157,7 @@ export default function ProfilePage() {
             </div>
             <div className="mt-6 grid gap-2">
               {[
-                ["Network", walrusNetwork || "testnet"],
+                ["Network", walrusNetwork || "mainnet"],
                 ["Records", String(data.transactions.length)],
                 ["Goals", String(data.goals.length)],
               ].map(([label, value]) => (
@@ -196,7 +196,7 @@ export default function ProfilePage() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl bg-[#F8FAFC] p-4">
                   <p className="text-xs font-black uppercase tracking-[0.14em] text-[#94A3B8]">Network</p>
-                  <p className="mt-2 text-lg font-black text-[#111827]">Sui Testnet</p>
+                  <p className="mt-2 text-lg font-black text-[#111827]">Sui Mainnet</p>
                 </div>
                 <div className="rounded-2xl bg-[#F8FAFC] p-4">
                   <p className="text-xs font-black uppercase tracking-[0.14em] text-[#94A3B8]">Currency</p>
@@ -265,7 +265,7 @@ export default function ProfilePage() {
             <div className="mb-4 rounded-2xl border border-[#BBF7D0] bg-[#F0FDF4] p-4">
               <div className="flex items-start gap-2">
                 <ShieldCheck size={16} className="mt-0.5 text-[#15803D]" />
-                <p className="text-sm leading-6 text-[#64748B]">Finix stores a local cache for speed and syncs a snapshot to Walrus testnet when saving succeeds.</p>
+                <p className="text-sm leading-6 text-[#64748B]">Finix stores a local cache for speed and syncs a snapshot to Walrus Mainnet when saving succeeds.</p>
               </div>
             </div>
 
@@ -273,7 +273,7 @@ export default function ProfilePage() {
               {[
                 ["Latest Blob ID", blobId || "Not synced yet"],
                 ["Latest Object ID", objectId || "Not available for the latest saved blob"],
-                ["Walrus Network", walrusNetwork || "testnet"],
+                ["Walrus Network", walrusNetwork || "mainnet"],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3">
                   <p className="mb-1 text-xs font-black uppercase tracking-[0.12em] text-[#94A3B8]">{label}</p>
@@ -294,8 +294,7 @@ export default function ProfilePage() {
                     showToast("error", "No object ID saved yet", "Sync data to Walrus before opening the explorer");
                     return;
                   }
-                  const network = walrusNetwork || process.env.NEXT_PUBLIC_WALRUS_NETWORK || "testnet";
-                  const base = network === "testnet" ? "testnet" : "mainnet";
+                  const base = "mainnet";
                   window.open(`https://suiscan.xyz/${base}/object/${objectId}`, "_blank", "noopener,noreferrer");
                 }}
               >

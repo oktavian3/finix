@@ -47,7 +47,7 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
   const [isSaving, setIsSaving] = useState(false);
   const [successBlobId, setSuccessBlobId] = useState<string | null>(null);
   const [successObjectId, setSuccessObjectId] = useState<string | null>(null);
-  const [successNetwork, setSuccessNetwork] = useState<'mainnet' | 'testnet'>('mainnet');
+  const [successNetwork, setSuccessNetwork] = useState<'mainnet'>('mainnet');
 
 
   const reset = () => {
@@ -99,17 +99,16 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
       if (res.ok) {
         const result = await res.json();
         if (result.success && result.blobId) {
-          const network = result.network || 'mainnet';
-          registerWalrusSnapshot({ blobId: result.blobId, objectId: result.objectId || null, network });
+          registerWalrusSnapshot({ blobId: result.blobId, objectId: result.objectId || null, network: 'mainnet' });
           setSuccessBlobId(result.blobId);
           setSuccessObjectId(result.objectId || null);
-          setSuccessNetwork(network as 'mainnet' | 'testnet');
-          showToast('success', `Transaction saved to Walrus on Sui ${network === 'testnet' ? 'Testnet' : 'Mainnet'}`);
+          setSuccessNetwork('mainnet');
+          showToast('success', 'Transaction saved encrypted to Walrus on Sui Mainnet');
           setIsSaving(false);
           return;
         }
       }
-      // Server API failed — data saved locally only (no testnet fallback)
+      // Server API failed — data saved locally only (no Mainnet fallback)
       console.warn('Server Walrus API failed, data saved locally only');
       throw new Error('Server Walrus API failed');
     } catch (err) {
@@ -258,7 +257,7 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
             </div>
             <h3 className="text-lg font-semibold text-[#111827] mb-1">Transaction Saved!</h3>
             <p className="text-xs text-[#6B7280] mb-6">
-              Your latest Finix data was saved to Walrus using the configured Sui network.
+              Your latest Finix data was saved to Walrus using Sui Mainnet.
             </p>
             <div className="w-full bg-[#F9FAFB] rounded-[10px] px-4 py-2.5 mb-5 border border-[#E2E8F0]">
               <p className="text-2xs text-[#6B7280] mb-0.5">Blob ID</p>
