@@ -47,7 +47,7 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
   const [isSaving, setIsSaving] = useState(false);
   const [successBlobId, setSuccessBlobId] = useState<string | null>(null);
   const [successObjectId, setSuccessObjectId] = useState<string | null>(null);
-  const [successNetwork, setSuccessNetwork] = useState<'mainnet'>('mainnet');
+  const [successNetwork, setSuccessNetwork] = useState<'mainnet' | 'testnet'>('mainnet');
 
 
   const reset = () => {
@@ -99,11 +99,12 @@ export function AddTransactionModal({ isOpen, onClose }: AddTransactionModalProp
       if (res.ok) {
         const result = await res.json();
         if (result.success && result.blobId) {
-          registerWalrusSnapshot({ blobId: result.blobId, objectId: result.objectId || null, network: 'mainnet' });
+          const network = result.network || 'mainnet';
+          registerWalrusSnapshot({ blobId: result.blobId, objectId: result.objectId || null, network });
           setSuccessBlobId(result.blobId);
           setSuccessObjectId(result.objectId || null);
-          setSuccessNetwork('mainnet');
-          showToast('success', 'Transaction saved encrypted to Walrus on Sui Mainnet');
+          setSuccessNetwork(network as 'mainnet' | 'testnet');
+          showToast('success', `Transaction saved to Walrus on Sui ${network === 'testnet' ? 'Testnet (mainnet unavailable)' : 'Mainnet'}`);
           setIsSaving(false);
           return;
         }

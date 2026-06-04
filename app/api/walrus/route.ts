@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       objectId: result.objectId,
       network: result.network,
       encRef: encrypted.encRef,
-      message: 'Finix records saved encrypted to Walrus Mainnet',
+      message: `Finix records saved encrypted to Walrus ${result.network === 'testnet' ? 'Testnet (mainnet unavailable)' : 'Mainnet'}`,
     });
   } catch (error) {
     console.error('[Walrus API] error:', error);

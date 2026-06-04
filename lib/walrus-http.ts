@@ -1,9 +1,9 @@
 /**
  * Walrus — Mainnet-first HTTP Publisher/Aggregator client.
  *
- * Tries mainnet first. If mainnet publisher is unreachable (DNS/timeout),
- * falls back to testnet so users don't lose data. The API response always
- * reports 'mainnet' — testnet is an invisible fallback.
+ * Tries mainnet first (via config or default). If mainnet publisher is
+ * unreachable (DNS/timeout), falls back to testnet so users don't lose data.
+ * The returned `network` field tells the true network — no deception.
  */
 
 const DEFAULT_PUBLISHER_MAINNET = 'https://publisher.walrus.space';
@@ -15,7 +15,7 @@ const DEFAULT_EPOCHS = 52;
 export interface StoreResult {
   blobId: string;
   objectId: string | null;
-  network: 'mainnet';
+  network: 'mainnet' | 'testnet';
 }
 
 function assertMainnetUrl(name: string, url: string): void {
@@ -67,7 +67,7 @@ function toBytes(data: unknown): Uint8Array {
 
 /**
  * Store encrypted data on Walrus via HTTP Publisher.
- * Tries mainnet first, falls back to testnet silently.
+ * Tries mainnet first, falls back to testnet. Returns true network.
  *
  * Walrus blobs are public. Callers must encrypt sensitive finance data before
  * calling this function.
@@ -75,14 +75,14 @@ function toBytes(data: unknown): Uint8Array {
 export async function storeBlobViaHTTP(data: unknown): Promise<StoreResult> {
   const bytes = toBytes(data);
   const epochs = getEpochs();
-  const publishers = [
-    `${getPublisherUrl()}/v1/blobs?epochs=${epochs}`,
-    `${DEFAULT_PUBLISHER_TESTNET}/v1/blobs?epochs=${epochs}`,
+  const publishers: [string, 'mainnet' | 'testnet'][] = [
+    [`${getPublisherUrl()}/v1/blobs?epochs=${epochs}`, 'mainnet'],
+    [`${DEFAULT_PUBLISHER_TESTNET}/v1/blobs?epochs=${epochs}`, 'testnet'],
   ];
 
-  for (const publisherUrl of publishers) {
+  for (const [url, network] of publishers) {
     try {
-      const res = await fetch(publisherUrl, {
+      const res = await fetch(url, {
         method: 'PUT',
         body: new Blob([bytes as BlobPart]),
         headers: {
@@ -99,8 +99,8 @@ export async function storeBlobViaHTTP(data: unknown): Promise<StoreResult> {
         || result.alreadyCertified?.blobId;
       const objectId = result.newlyCreated?.blobObject?.id
         || result.alreadyCertified?.blobObject?.id;
-      if (blobId) return { blobId, objectId: objectId || null, network: 'mainnet' };
-    } catch { /* try next publisher */ }
+      if (blobId) return { blobId, objectId: objectId || null, network };
+    } catch { /* try next */ }
   }
 
   throw new Error('Walrus HTTP Publisher unreachable on all endpoints');

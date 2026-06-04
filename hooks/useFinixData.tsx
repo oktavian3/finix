@@ -22,8 +22,8 @@ interface FinixDataContextType {
   isSaving: boolean;
   blobId: string | null;
   objectId: string | null;
-  walrusNetwork: 'mainnet' | null;
-  registerWalrusSnapshot: (snapshot: { blobId: string; objectId?: string | null; network?: 'mainnet' }) => void;
+  walrusNetwork: 'mainnet' | 'testnet' | null;
+  registerWalrusSnapshot: (snapshot: { blobId: string; objectId?: string | null; network?: 'mainnet' | 'testnet' }) => void;
 }
 
 const FinixDataContext = createContext<FinixDataContextType | null>(null);
@@ -49,7 +49,7 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
   const [isSaving, setIsSaving] = useState(false);
   const [blobId, setBlobId] = useState<string | null>(null);
   const [objectId, setObjectId] = useState<string | null>(null);
-  const [walrusNetwork, setWalrusNetwork] = useState<'mainnet' | null>(null);
+  const [walrusNetwork, setWalrusNetwork] = useState<'mainnet' | 'testnet' | null>(null);
   const currentAccount = useCurrentAccount();
   const initializedRef = useRef<Record<string, boolean>>({});
   const prevAddrRef = useRef<string | null>(null);
@@ -203,7 +203,7 @@ export function FinixDataProvider({ children }: { children: ReactNode }) {
     setWalrusNetwork(null);
   }, [walletAddress]);
 
-  const registerWalrusSnapshot = useCallback((snapshot: { blobId: string; objectId?: string | null; network?: 'mainnet' }) => {
+  const registerWalrusSnapshot = useCallback((snapshot: { blobId: string; objectId?: string | null; network?: 'mainnet' | 'testnet' }) => {
     if (!walletAddress) return;
     setBlobId(snapshot.blobId);
     setObjectId(snapshot.objectId || null);
