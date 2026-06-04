@@ -1,9 +1,9 @@
 # Finix
 
-> **Live demo:** [finix-one.vercel.app](https://finix-one.vercel.app)
+> **Live demo:** [getfinix.xyz](https://getfinix.xyz)
 
 <p align="center">
-  <a href="https://finix-one.vercel.app">
+  <a href="https://getfinix.xyz">
     <img src="public/favicon.svg" width="48" height="48" alt="Finix logo">
   </a>
 </p>
